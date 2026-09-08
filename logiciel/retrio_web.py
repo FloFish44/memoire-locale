@@ -1,0 +1,806 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Retrio — application Windows de recherche documentaire (interface web).
+
+100% local : aucune analyse, aucun fichier et aucune requête n'est envoyé
+sur Internet. Tout le traitement (parcours des dossiers, index, recherche)
+se fait sur la machine de l'utilisateur — seule l'INTERFACE est rendue par
+un moteur web (WebView2, déjà présent sur Windows 10/11) qui charge la page
+locale app.html : rendu identique au design d'origine (anti-aliasing natif,
+polices exactes), sans jamais rien envoyer sur le réseau.
+
+Ne nécessite aucune dépendance externe pour la logique : uniquement la
+bibliothèque standard de Python. Seule l'interface utilise la dépendance
+`pywebview` (+ pythonnet sur Windows, pour piloter WebView2).
+
+Lancer :   python retrio_web.py
+Compiler : voir build_web.bat (utilise PyInstaller)
+"""
+
+import base64
+import csv
+import ctypes
+import difflib
+import io
+import json
+import os
+import re
+import sys
+import subprocess
+import threading
+import xml.etree.ElementTree as ET
+import zipfile
+from collections import defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+
+APP_NAME = "Retrio"
+APP_VERSION = "0.3.0 (bêta)"
+
+# ---------------------------------------------------------------------------
+# Icône de l'application (PNG encodé en base64, intégré directement au
+# script pour ne dépendre d'aucun fichier externe au runtime)
+# ---------------------------------------------------------------------------
+ICON_PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADeUlEQVR4nJ2XTW/cNhCGn6G0Wie2dxsHMFIgXvvUa3oK2l8R5B+kQH9sfWoK9FCgHyhQpAGKOKk/urJWIqcHSlotV5Tk8LDSjobvvJwZcoayWJ0qzZD6qZ336JBaMZwY0+ngdkRmR18DjBBvRxYqDipHRabve6sTemGSZ/p5aOCs5u8egen4n8Nkf/Yegfajsu/ZHZu68xizJsH/RmB2hL2GxsEn64W6AmmblX0J3As0ZlGneaUeaaPfwgb4qiCmxq2c1+3bdbLVN2lvZCMEmrnB/mxYiXjDkhjmJ0deMOQEq2xuc9Q6JDWd9I8RiMW+ZqXWMTt+xMnXF2SLx56jgHQYC1LzFVSV8nbN1ds/KW/WSJIwFBMzHC9FjPDkxTkHT49R58ApOA3eFbUOZyuctcyfHPH0xQUYM2jcE4gOv/r06IBseYjbVCCCGMGIkCQJxiSIGFQVVecBRXCbitnxI2bHB6h1DMVsuwv2dLTh4R3cyRFrLUWee5HCPMswxnRnIapIk61hfu0QaBR6PBByMSJUVcXyiyWr1YrKVjir/PHb75RlSZKmSJ10U3fitP1Sr0DrVZVFyavXr3j27EvOL8558/13GGNQ51BVnAvMawjWJRCj2nWAblGMGPL7nJubG/I85+rDBw4PDzFJgnVuG82oC3Y/pPvu76nzWsNq/a7g1PH87DlnZ2dc/nDJ9ad/WSyXfncAWp9wYwW0JwSRGl4bttayWCxI0xnv/37PTz++5eU3L1mdryiLTScJp1VvWZyfRpwlqLXMFo85/far+uAB5xzz+ZzZLEUVyrIkyzIqa8nXa78absv/XP5Kef0fkibREzEdIdguwamvWCJQFAX5fd6efPk6xxiDSUybrHsejIxhAuIPI3XecIMrIqQm9Seg+NNSUVwdf9Tr4Nxo9RzYhh64uisorm4x2YymOqn6UDiaPb+tCSgk8xnFxzvKu3vEDJxCUzyAKJ9+/gutHNnJUS3veKP92dpZv/vI9S/vBqFbE/Ek3A5VX3SSgyxoHHq6GFXs/aatG2NjPAmp45kItii7woZeh6nnMJT1IeFJBFr1ZkWN8bB/l6ZRnd6TjfQDkdHtIXv7s+lApvfy8SAG4ehrfyMQ9HngQfeNnivPVKD2XvDZF5zuSvs80q0EcSMjOTDRnVE9DZ59BHrBxgxEby087JYD/wNID45gGI7YLQAAAABJRU5ErkJggg=="
+
+# ---------------------------------------------------------------------------
+# Palette et typographie : définies plus bas, dans la section interface
+# graphique (identiques au site Retrio et à l'installateur — cf. design
+# tokens COL_* / FONT_SERIF / FONT_SANS / FONT_MONO).
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Dossiers connus (compatibles avec un Windows localisé en français)
+# ---------------------------------------------------------------------------
+
+# GUID des dossiers connus Windows (Known Folder API), indépendants de la langue
+KNOWN_FOLDER_GUIDS = {
+    "Documents": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
+    "Images": "33E28130-4E1E-4676-835A-98395C3BC3BB",
+    "Vidéos": "18989B1D-99B5-455B-841C-AB7C74E4DDFC",
+    "Musique": "4BD8D571-6D19-48D3-BE97-422220080E43",
+    "Téléchargements": "374DE290-123F-4565-9164-39C4925E467B",
+}
+
+
+def _get_known_folder_win(guid: str) -> str | None:
+    """Retourne le chemin réel d'un dossier connu Windows, quelle que soit la langue."""
+    try:
+        buf = ctypes.c_wchar_p()
+        shell32 = ctypes.windll.shell32
+        guid_struct = ctypes.create_unicode_buffer(guid)
+        # SHGetKnownFolderPath attend un GUID binaire (ctypes.wintypes) ; on
+        # utilise une méthode compatible en construisant un GUID via ole32.
+        from ctypes import wintypes
+
+        class GUID(ctypes.Structure):
+            _fields_ = [
+                ("Data1", wintypes.DWORD),
+                ("Data2", wintypes.WORD),
+                ("Data3", wintypes.WORD),
+                ("Data4", ctypes.c_byte * 8),
+            ]
+
+        rfid = GUID()
+        ole32 = ctypes.windll.ole32
+        ole32.CLSIDFromString(ctypes.create_unicode_buffer("{" + guid + "}"), ctypes.byref(rfid))
+        ret = shell32.SHGetKnownFolderPath(ctypes.byref(rfid), 0, 0, ctypes.byref(buf))
+        if ret == 0 and buf.value:
+            path = buf.value
+            ctypes.windll.ole32.CoTaskMemFree(buf)
+            return path
+    except Exception:
+        return None
+    return None
+
+
+def get_known_folders() -> dict[str, str]:
+    """Construit la liste des dossiers proposés à l'utilisateur (nom -> chemin)."""
+    folders: dict[str, str] = {}
+    home = str(Path.home())
+
+    if sys.platform == "win32":
+        for label, guid in KNOWN_FOLDER_GUIDS.items():
+            path = _get_known_folder_win(guid)
+            if path and os.path.isdir(path):
+                folders[label] = path
+        # Repli si l'API Windows échoue : noms de dossiers usuels
+        fallback_names = {
+            "Documents": "Documents",
+            "Images": "Pictures",
+            "Vidéos": "Videos",
+            "Musique": "Music",
+            "Téléchargements": "Downloads",
+        }
+        for label, folder_name in fallback_names.items():
+            if label not in folders:
+                guess = os.path.join(home, folder_name)
+                if os.path.isdir(guess):
+                    folders[label] = guess
+    else:
+        # Environnement non-Windows (développement / test sur Linux ou macOS)
+        fallback_names = {
+            "Documents": "Documents",
+            "Images": "Pictures",
+            "Vidéos": "Videos",
+            "Musique": "Music",
+            "Téléchargements": "Downloads",
+        }
+        for label, folder_name in fallback_names.items():
+            guess = os.path.join(home, folder_name)
+            if os.path.isdir(guess):
+                folders[label] = guess
+
+    # Disques / partitions
+    if sys.platform == "win32":
+        import string
+
+        for letter in string.ascii_uppercase:
+            drive = f"{letter}:\\"
+            if os.path.exists(drive):
+                try:
+                    # On ne propose pas le lecteur système "A:" ou lecteurs
+                    # amovibles vides par défaut, mais on liste C: et D: en priorité.
+                    if letter in ("C", "D") and os.path.isdir(drive):
+                        folders[f"Disque {letter}:"] = drive
+                except Exception:
+                    pass
+    else:
+        if os.path.isdir("/"):
+            folders["Disque (racine)"] = "/"
+
+    return folders
+
+
+# ---------------------------------------------------------------------------
+# Catégorisation des fichiers
+# ---------------------------------------------------------------------------
+EXT_PDF = {".pdf"}
+EXT_IMAGES = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".heic", ".heif", ".svg", ".raw"}
+EXT_VIDEOS = {".mp4", ".mov", ".avi", ".mkv", ".wmv", ".m4v", ".flv", ".webm"}
+EXT_AUDIO = {".mp3", ".wav", ".flac", ".aac", ".m4a", ".wma", ".ogg"}
+EXT_DOCS = {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".odt", ".ods", ".odp", ".rtf", ".csv"}
+EXT_ARCHIVES = {".zip", ".rar", ".7z", ".tar", ".gz"}
+
+# Extensions pour lesquelles on tente une extraction du contenu texte
+# (utilisées pour indexer et retrouver un fichier par ce qu'il contient,
+# pas seulement par son nom). Tout est fait avec la bibliothèque standard.
+EXT_TEXT_READABLE = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".html", ".htm", ".ini", ".rtf"}
+EXT_DOCX = {".docx"}
+EXT_XLSX = {".xlsx"}
+EXT_PPTX = {".pptx"}
+
+# Taille max lue par fichier pour l'extraction de contenu (évite de passer
+# un temps disproportionné sur d'énormes fichiers texte/logs).
+MAX_CONTENT_READ_BYTES = 2_000_000
+# Longueur max du contenu conservé en mémoire par fichier (index + aperçu).
+MAX_CONTENT_KEEP_CHARS = 20_000
+
+# Dossiers à ignorer pendant le parcours (dossiers système / techniques)
+SKIP_DIR_NAMES = {
+    "$recycle.bin", "system volume information", "windows", "programdata",
+    "program files", "program files (x86)", "node_modules", ".git", ".cache",
+    "appdata",
+}
+
+# Motifs de noms de fichiers "peu parlants" (scan, capture, sans titre...)
+BADLY_NAMED_PATTERNS = [
+    re.compile(r"^img_?\d+$", re.I),
+    re.compile(r"^scan_?\d+$", re.I),
+    re.compile(r"^scan\d{4,}.*$", re.I),
+    re.compile(r"^document\d*$", re.I),
+    re.compile(r"^document \(\d+\)$", re.I),
+    re.compile(r"^nouveau document.*$", re.I),
+    re.compile(r"^sans titre.*$", re.I),
+    re.compile(r"^untitled.*$", re.I),
+    re.compile(r"^copie de .*$", re.I),
+    re.compile(r"^\d{8,}$"),
+    re.compile(r"^capture d.?écran.*$", re.I),
+    re.compile(r"^dsc_?\d+$", re.I),
+    re.compile(r"^photo_?\d+$", re.I),
+    re.compile(r"^fichier\d*$", re.I),
+    re.compile(r"^new document.*$", re.I),
+]
+
+
+def categorize(ext: str) -> str:
+    ext = ext.lower()
+    if ext in EXT_PDF:
+        return "pdf"
+    if ext in EXT_IMAGES:
+        return "images"
+    if ext in EXT_VIDEOS:
+        return "videos"
+    if ext in EXT_AUDIO:
+        return "audio"
+    if ext in EXT_DOCS:
+        return "documents"
+    if ext in EXT_ARCHIVES:
+        return "archives"
+    return "autres"
+
+
+def is_badly_named(stem: str) -> bool:
+    stem = stem.strip()
+    for pattern in BADLY_NAMED_PATTERNS:
+        if pattern.match(stem):
+            return True
+    return False
+
+
+CATEGORY_LABELS = {
+    "pdf": "PDF",
+    "images": "Photos & images",
+    "videos": "Vidéos",
+    "audio": "Musique & audio",
+    "documents": "Autres documents",
+    "archives": "Archives",
+    "autres": "Autres fichiers",
+}
+
+
+# ---------------------------------------------------------------------------
+# Extraction de contenu (100% bibliothèque standard)
+#
+# But : permettre de retrouver un fichier par ce qu'il CONTIENT (le texte
+# d'une facture, les cellules d'un tableau, le texte d'une présentation...)
+# et pas seulement par son nom de fichier. Chaque fonction est "best effort"
+# et ne lève jamais d'exception vers l'appelant : un fichier illisible ou
+# corrompu est simplement ignoré pour l'indexation de contenu (son nom
+# reste malgré tout cherchable).
+# ---------------------------------------------------------------------------
+
+def _read_plain_text(path: str) -> str:
+    try:
+        with open(path, "rb") as f:
+            raw = f.read(MAX_CONTENT_READ_BYTES)
+        for encoding in ("utf-8", "cp1252", "latin-1"):
+            try:
+                return raw.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+        return raw.decode("utf-8", errors="ignore")
+    except Exception:
+        return ""
+
+
+def _read_csv_text(path: str) -> str:
+    text = _read_plain_text(path)
+    if not text:
+        return ""
+    try:
+        reader = csv.reader(io.StringIO(text[:MAX_CONTENT_READ_BYTES]))
+        rows = []
+        for i, row in enumerate(reader):
+            if i > 2000:
+                break
+            rows.append(" ".join(row))
+        return "\n".join(rows)
+    except Exception:
+        return text
+
+
+def _xml_text(xml_bytes: bytes) -> str:
+    try:
+        root = ET.fromstring(xml_bytes)
+        return " ".join(t.strip() for t in root.itertext() if t and t.strip())
+    except Exception:
+        return ""
+
+
+def _read_docx_text(path: str) -> str:
+    try:
+        with zipfile.ZipFile(path) as z:
+            data = z.read("word/document.xml")
+        return _xml_text(data)
+    except Exception:
+        return ""
+
+
+def _read_xlsx_text(path: str) -> str:
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = [n for n in z.namelist() if n.startswith("xl/worksheets/") and n.endswith(".xml")]
+            shared = ""
+            if "xl/sharedStrings.xml" in z.namelist():
+                shared = _xml_text(z.read("xl/sharedStrings.xml"))
+            parts = [shared]
+            for n in names[:20]:  # limite raisonnable de feuilles parcourues
+                parts.append(_xml_text(z.read(n)))
+        return " ".join(p for p in parts if p)
+    except Exception:
+        return ""
+
+
+def _read_pptx_text(path: str) -> str:
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = sorted(n for n in z.namelist() if re.match(r"ppt/slides/slide\d+\.xml$", n))
+            parts = []
+            for n in names[:200]:
+                parts.append(_xml_text(z.read(n)))
+        return " ".join(p for p in parts if p)
+    except Exception:
+        return ""
+
+
+def extract_text_content(path: str, ext: str) -> str:
+    """Retourne un extrait texte du fichier pour l'indexation de contenu,
+    ou une chaîne vide si le format n'est pas pris en charge / illisible."""
+    ext = ext.lower()
+    try:
+        if ext == ".csv":
+            text = _read_csv_text(path)
+        elif ext in EXT_TEXT_READABLE:
+            text = _read_plain_text(path)
+            if ext in (".html", ".htm", ".xml"):
+                text = re.sub(r"<[^>]+>", " ", text)
+        elif ext in EXT_DOCX:
+            text = _read_docx_text(path)
+        elif ext in EXT_XLSX:
+            text = _read_xlsx_text(path)
+        elif ext in EXT_PPTX:
+            text = _read_pptx_text(path)
+        else:
+            text = ""
+    except Exception:
+        text = ""
+
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > MAX_CONTENT_KEEP_CHARS:
+        text = text[:MAX_CONTENT_KEEP_CHARS]
+    return text
+
+
+@dataclass
+class FileEntry:
+    path: str
+    name: str
+    stem: str
+    ext: str
+    category: str
+    size: int
+    badly_named: bool
+    content: str = ""          # extrait de contenu indexé (peut être vide)
+    content_lower: str = ""    # version en minuscule, prête pour la recherche
+
+
+@dataclass
+class ScanResult:
+    entries: list = field(default_factory=list)
+    counts_by_category: dict = field(default_factory=lambda: defaultdict(int))
+    total_files: int = 0
+    total_size: int = 0
+    duplicates_count: int = 0
+    badly_named_count: int = 0
+    content_indexed_count: int = 0
+    errors: int = 0
+
+
+def human_size(num_bytes: int) -> str:
+    size = float(num_bytes)
+    for unit in ["o", "Ko", "Mo", "Go", "To"]:
+        if size < 1024:
+            return f"{size:.1f} {unit}" if unit != "o" else f"{int(size)} {unit}"
+        size /= 1024
+    return f"{size:.1f} Po"
+
+
+def scan_folders(roots: list, progress_cb=None, stop_flag: threading.Event = None) -> ScanResult:
+    """Parcourt récursivement les dossiers sélectionnés, construit les stats
+    et indexe le contenu texte des documents reconnus (voir extract_text_content).
+
+    progress_cb(n_files, current_path) est appelé régulièrement pour permettre
+    une mise à jour de l'interface pendant le scan (qui tourne dans un thread
+    séparé pour ne jamais geler la fenêtre).
+    """
+    result = ScanResult()
+    size_index: dict = defaultdict(list)  # taille -> liste de chemins (détection de doublons)
+
+    for root in roots:
+        for dirpath, dirnames, filenames in os.walk(root, onerror=lambda e: None):
+            if stop_flag is not None and stop_flag.is_set():
+                return result
+
+            # Élague les dossiers système / techniques pour rester rapide et pertinent
+            dirnames[:] = [d for d in dirnames if d.lower() not in SKIP_DIR_NAMES and not d.startswith(".")]
+
+            for filename in filenames:
+                if stop_flag is not None and stop_flag.is_set():
+                    return result
+                full_path = os.path.join(dirpath, filename)
+                try:
+                    stat = os.stat(full_path)
+                except OSError:
+                    result.errors += 1
+                    continue
+
+                stem, ext = os.path.splitext(filename)
+                ext = ext.lower()
+                category = categorize(ext)
+                badly_named = is_badly_named(stem)
+
+                content = ""
+                # On ne tente l'extraction que sur des fichiers de taille
+                # raisonnable, pour ne jamais bloquer l'analyse sur un très
+                # gros fichier.
+                if stat.st_size <= MAX_CONTENT_READ_BYTES * 3:
+                    content = extract_text_content(full_path, ext)
+
+                entry = FileEntry(
+                    path=full_path,
+                    name=filename,
+                    stem=stem,
+                    ext=ext,
+                    category=category,
+                    size=stat.st_size,
+                    badly_named=badly_named,
+                    content=content,
+                    content_lower=content.lower(),
+                )
+                result.entries.append(entry)
+                result.counts_by_category[category] += 1
+                result.total_files += 1
+                result.total_size += stat.st_size
+                if badly_named:
+                    result.badly_named_count += 1
+                if content:
+                    result.content_indexed_count += 1
+                if stat.st_size > 0:
+                    size_index[(stat.st_size, filename.lower())].append(full_path)
+
+                if progress_cb and result.total_files % 25 == 0:
+                    progress_cb(result.total_files, full_path)
+
+    # Doublons potentiels : même taille + même nom de fichier dans des dossiers différents
+    for key, paths in size_index.items():
+        if len(paths) > 1:
+            result.duplicates_count += len(paths) - 1
+
+    if progress_cb:
+        progress_cb(result.total_files, "")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Recherche en langage courant
+#
+# La recherche combine plusieurs signaux pour se rapprocher d'une requête
+# "comme on parle" plutôt que d'une simple correspondance exacte :
+#   1. Mots du nom de fichier (poids fort, y compris correspondance floue
+#      pour tolérer les fautes de frappe grâce à difflib)
+#   2. Mots du CONTENU du fichier, quand celui-ci a pu être indexé
+#      (documents Word/Excel/PowerPoint, texte, CSV, HTML...)
+#   3. Mots du chemin / des dossiers parents
+#   4. Synonymes usuels (facture ~ reçu, photo ~ image...)
+#   5. Bonus si la requête entière apparaît telle quelle (nom ou contenu)
+#
+# Limite honnête : Retrio ne "regarde" pas l'intérieur d'une image ou d'une
+# vidéo (reconnaître un objet, un logo, un visage sur une photo demande un
+# modèle de vision par ordinateur, ce qui sort du cadre d'un petit outil
+# 100% local et sans dépendance). Une image ne peut donc être retrouvée que
+# par son nom de fichier, son dossier, ou — si Retrio en a l'occasion plus
+# tard — un texte que l'utilisateur y aura associé lui-même (légende, nom
+# de dossier explicite...).
+# ---------------------------------------------------------------------------
+SYNONYMS = {
+    "facture": ["facture", "invoice", "reçu", "recu", "note"],
+    "assurance": ["assurance", "contrat", "attestation", "police"],
+    "photo": ["photo", "image", "img", "dsc", "photos"],
+    "logo": ["logo", "marque", "icone", "icône", "brand"],
+    "video": ["video", "vidéo", "film", "mov", "clip"],
+    "musique": ["musique", "son", "audio", "mp3", "chanson"],
+    "devis": ["devis", "estimation", "proposition", "offre"],
+    "cv": ["cv", "curriculum", "resume", "candidature"],
+    "impot": ["impot", "impôt", "taxe", "fiscal", "declaration"],
+    "banque": ["banque", "releve", "relevé", "compte", "virement"],
+    "contrat": ["contrat", "bail", "convention", "accord"],
+    "carte": ["carte", "id", "identite", "identité", "passeport"],
+}
+
+STOPWORDS = {
+    "le", "la", "les", "un", "une", "des", "de", "du", "avec", "et", "ou",
+    "sur", "dans", "pour", "mon", "ma", "mes", "au", "aux", "ce", "cette",
+    "the", "a", "an", "with", "and", "or", "for", "of", "my",
+}
+
+
+def _tokenize(text: str) -> list:
+    return re.findall(r"[a-zà-ÿ0-9]+", text.lower())
+
+
+def expand_query(query: str) -> list:
+    tokens = [t for t in _tokenize(query) if t not in STOPWORDS] or _tokenize(query)
+    expanded = set(tokens)
+    for token in tokens:
+        for key, syns in SYNONYMS.items():
+            if token == key or token in syns:
+                expanded.update(syns)
+                expanded.add(key)
+    return list(expanded)
+
+
+def _fuzzy_token_score(token: str, haystack_tokens: set) -> float:
+    """Tolère les fautes de frappe / accords approximatifs : renvoie le
+    meilleur score de similarité (0 à 1) entre `token` et les mots du texte
+    comparé, via difflib (bibliothèque standard, pas d'IA)."""
+    if not haystack_tokens:
+        return 0.0
+    best = 0.0
+    for h in haystack_tokens:
+        if abs(len(h) - len(token)) > 3:
+            continue
+        ratio = difflib.SequenceMatcher(None, token, h).ratio()
+        if ratio > best:
+            best = ratio
+    return best
+
+
+def search_entries(entries: list, query: str, limit: int = 60) -> list:
+    query = query.strip()
+    if not query:
+        return []
+    tokens = expand_query(query)
+    query_lower = query.lower()
+
+    scored = []
+    for entry in entries:
+        name_lower = entry.name.lower()
+        stem_tokens = set(_tokenize(entry.stem))
+        path_lower = entry.path.lower()
+        content_lower = entry.content_lower
+
+        score = 0.0
+        matched_any = False
+
+        for t in tokens:
+            if t in name_lower:
+                score += 5
+                matched_any = True
+            elif _fuzzy_token_score(t, stem_tokens) >= 0.82:
+                score += 3
+                matched_any = True
+
+            if content_lower and t in content_lower:
+                score += 2
+                matched_any = True
+
+            if t in path_lower and t not in name_lower:
+                score += 1
+                matched_any = True
+
+        # Bonus : la requête complète apparaît telle quelle
+        if query_lower in name_lower:
+            score += 8
+            matched_any = True
+        if content_lower and query_lower in content_lower:
+            score += 6
+            matched_any = True
+
+        # Petit malus pour les fichiers dont le nom ne dit rien (on les
+        # laisse remonter uniquement si le CONTENU correspond vraiment).
+        if entry.badly_named and not (content_lower and any(t in content_lower for t in tokens)):
+            score *= 0.85
+
+        if matched_any and score > 0:
+            scored.append((score, entry))
+
+    scored.sort(key=lambda pair: (-pair[0], pair[1].name.lower()))
+    return [e for _, e in scored[:limit]]
+
+
+def content_snippet(entry, query: str, radius: int = 60) -> str:
+    """Construit un court extrait du contenu autour du premier mot-clé
+    trouvé, pour montrer à l'utilisateur POURQUOI ce fichier est remonté."""
+    if not entry.content:
+        return ""
+    tokens = expand_query(query)
+    lower = entry.content_lower
+    best_pos = -1
+    for t in tokens:
+        pos = lower.find(t)
+        if pos != -1 and (best_pos == -1 or pos < best_pos):
+            best_pos = pos
+    if best_pos == -1:
+        return ""
+    start = max(0, best_pos - radius)
+    end = min(len(entry.content), best_pos + radius)
+    snippet = entry.content[start:end].strip()
+    prefix = "… " if start > 0 else ""
+    suffix = " …" if end < len(entry.content) else ""
+    return f"{prefix}{snippet}{suffix}"
+
+
+# ---------------------------------------------------------------------------
+# Couleurs utilisées pour les badges de type de fichier dans les résultats
+# (identiques aux tokens CSS de app.css — voir --primary, --terracotta, etc.)
+# ---------------------------------------------------------------------------
+COL_BG = "#F5F1E6"
+COL_PRIMARY = "#1B4332"
+COL_GOLD = "#D9C185"
+COL_TERRACOTTA = "#C9A187"
+COL_TEXT_TERTIARY = "#5B7364"
+
+
+def file_badge(entry) -> tuple:
+    ext = entry.ext.lower()
+    if ext == ".pdf":
+        return "PDF", COL_PRIMARY
+    if ext in (".doc", ".docx", ".odt", ".rtf"):
+        return "DOCX", COL_TERRACOTTA
+    if ext in (".xls", ".xlsx", ".csv", ".ods"):
+        return "XLSX", COL_TERRACOTTA
+    if ext in (".ppt", ".pptx", ".odp"):
+        return "PPT", COL_TERRACOTTA
+    if ext in (".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".heic", ".heif", ".tif", ".tiff", ".svg"):
+        return "JPG", COL_GOLD
+    if ext in (".mp4", ".mov", ".avi", ".mkv", ".wmv", ".m4v", ".flv", ".webm"):
+        return "VID", COL_TEXT_TERTIARY
+    if ext in (".mp3", ".wav", ".flac", ".aac", ".m4a", ".wma", ".ogg"):
+        return "AUD", COL_TEXT_TERTIARY
+    label = ext.lstrip(".").upper()[:4] or "FILE"
+    return label, COL_TEXT_TERTIARY
+
+
+# ---------------------------------------------------------------------------
+# Pont pywebview : expose la logique métier ci-dessus au JavaScript de
+# app.html / app.js. AUCUNE logique métier n'est dupliquée ici — cette
+# classe ne fait que sérialiser des dataclasses Python en JSON et router les
+# appels ; le scan, la recherche, l'extraction de contenu restent exactement
+# le code ci-dessus (identique à la version précédente de Retrio).
+# ---------------------------------------------------------------------------
+class Api:
+    def __init__(self):
+        self.window = None
+        self.scan_result = ScanResult()
+        self.type_filter = "tous"
+
+    def _run_js(self, code):
+        try:
+            if self.window is not None:
+                self.window.evaluate_js(code)
+        except Exception:
+            pass
+
+    # -- dossiers ----------------------------------------------------------
+    def get_known_folders(self):
+        return get_known_folders()
+
+    def pick_folder(self):
+        import webview
+        try:
+            result = self.window.create_file_dialog(webview.FOLDER_DIALOG)
+        except Exception:
+            return None
+        if result:
+            return result[0]
+        return None
+
+    # -- analyse -------------------------------------------------------------
+    def start_scan(self, roots):
+        threading.Thread(target=self._scan_worker, args=(list(roots),), daemon=True).start()
+        return True
+
+    def _scan_worker(self, roots):
+        stop_flag = threading.Event()
+
+        def progress_cb(n_files, current_path):
+            self._run_js(f"window.onScanProgress({n_files}, {json.dumps(current_path)})")
+
+        result = scan_folders(roots, progress_cb=progress_cb, stop_flag=stop_flag)
+        self.scan_result = result
+
+        payload = {
+            "total_files": result.total_files,
+            "total_size_human": human_size(result.total_size),
+            "content_indexed_count": result.content_indexed_count,
+            "counts": dict(result.counts_by_category),
+        }
+        self._run_js(f"window.onScanDone({json.dumps(json.dumps(payload))})")
+
+    # -- recherche -----------------------------------------------------------
+    def _filtered(self, entries, type_filter):
+        if type_filter == "tous":
+            return entries
+        mapping = {"pdf": "pdf", "image": "images", "doc": "documents"}
+        cat = mapping.get(type_filter)
+        return [e for e in entries if e.category == cat]
+
+    def search(self, query, type_filter):
+        self.type_filter = type_filter or "tous"
+        pool = self._filtered(self.scan_result.entries, self.type_filter)
+        query = query or ""
+        if query.strip():
+            matches = search_entries(pool, query)
+        else:
+            matches = pool[:60]
+
+        if query.strip():
+            count_label = f"{len(matches)} résultat(s) pour « {query} »"
+        else:
+            count_label = f"{len(matches)} fichier(s)" if matches else ""
+
+        match_dicts = []
+        for entry in matches:
+            badge_label, badge_color = file_badge(entry)
+            match_dicts.append({
+                "path": entry.path,
+                "name": entry.name,
+                "dir": os.path.dirname(entry.path),
+                "size_human": human_size(entry.size),
+                "badly_named": entry.badly_named,
+                "badge_label": badge_label,
+                "badge_color": badge_color,
+                "snippet": content_snippet(entry, query) if query else "",
+            })
+        return json.dumps({"matches": match_dicts, "count_label": count_label})
+
+    # -- actions sur un fichier ------------------------------------------------
+    def open_path(self, path):
+        try:
+            if sys.platform == "win32":
+                os.startfile(path)  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.run(["open", path])
+            else:
+                subprocess.run(["xdg-open", path])
+        except Exception:
+            pass
+        return True
+
+    def open_folder(self, path):
+        self.open_path(os.path.dirname(path))
+        return True
+
+    def copy_path(self, path):
+        try:
+            if sys.platform == "win32":
+                subprocess.run(["clip"], input=path.encode("utf-16-le"), check=True)
+            elif sys.platform == "darwin":
+                subprocess.run(["pbcopy"], input=path.encode("utf-8"), check=True)
+            else:
+                subprocess.run(["xclip", "-selection", "clipboard"], input=path.encode("utf-8"), check=False)
+        except Exception:
+            pass
+        return True
+
+
+def resource_path(*parts):
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, *parts)
+
+
+def main():
+    import webview
+
+    api = Api()
+    html_path = resource_path("app.html")
+
+    # Icône de la fenêtre : webview.start(icon=...) exige un vrai fichier
+    # .ico (System.Drawing.Icon côté WebView2/.NET refuse un PNG). On
+    # utilise le .ico déjà bundlé avec l'app (voir build_web.bat), avec un
+    # repli silencieux si absent plutôt que de faire planter l'appli.
+    icon_path = resource_path("icon.ico")
+    if not os.path.isfile(icon_path):
+        icon_path = None
+
+    window = webview.create_window(
+        APP_NAME,
+        url=html_path,
+        js_api=api,
+        width=1220,
+        height=800,
+        min_size=(1000, 660),
+        background_color="#F5F1E6",
+    )
+    api.window = window
+    if icon_path:
+        webview.start(icon=icon_path)
+    else:
+        webview.start()
+
+
+if __name__ == "__main__":
+    main()
