@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Mémoire locale — application Windows de recherche documentaire.
+Retrio — application Windows de recherche documentaire.
 
 100% local : aucune analyse, aucun fichier et aucune requête n'est envoyé
 sur Internet. Tout le traitement (parcours des dossiers, index, recherche)
@@ -10,7 +10,7 @@ se fait sur la machine de l'utilisateur.
 Ne nécessite aucune dépendance externe : uniquement la bibliothèque
 standard de Python (tkinter inclus).
 
-Lancer :   python memoire_locale.py
+Lancer :   python retrio.py
 Compiler : voir build_exe.bat (utilise PyInstaller)
 """
 
@@ -28,7 +28,7 @@ from pathlib import Path
 from tkinter import Tk, Canvas, StringVar, IntVar, BooleanVar
 from tkinter import ttk, filedialog
 
-APP_NAME = "Mémoire locale"
+APP_NAME = "Retrio"
 APP_VERSION = "0.1.0 (bêta)"
 
 # ---------------------------------------------------------------------------
@@ -375,7 +375,7 @@ CATEGORY_ICONS = {
 }
 
 
-class MemoireLocaleApp:
+class RetrioApp:
     def __init__(self, root: Tk):
         self.root = root
         self.root.title(APP_NAME)
@@ -436,7 +436,7 @@ class MemoireLocaleApp:
     def _build_layout(self):
         header = ttk.Frame(self.root, padding=(28, 22, 28, 10))
         header.pack(fill="x")
-        ttk.Label(header, text="Mémoire locale", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(header, text="Retrio", style="Title.TLabel").pack(anchor="w")
         ttk.Label(
             header,
             text="Sélectionnez vos dossiers, lancez l'analyse, puis retrouvez vos fichiers en quelques mots. "
@@ -692,7 +692,7 @@ class MemoireLocaleApp:
 
 def main():
     root = Tk()
-    MemoireLocaleApp(root)
+    Mretrio.pyLocaleApp(root)
     root.mainloop()
 
 
