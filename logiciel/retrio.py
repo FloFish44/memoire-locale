@@ -8,13 +8,19 @@ sur Internet. Tout le traitement (parcours des dossiers, index, recherche)
 se fait sur la machine de l'utilisateur.
 
 Ne nécessite aucune dépendance externe : uniquement la bibliothèque
-standard de Python (tkinter inclus).
+standard de Python (tkinter inclus). L'indexation de contenu (texte dans
+les documents) et la recherche floue sont également 100% stdlib.
 
 Lancer :   python retrio.py
 Compiler : voir build_exe.bat (utilise PyInstaller)
 """
 
+import base64
+import csv
 import ctypes
+import difflib
+import io
+import json
 import os
 import queue
 import re
@@ -22,14 +28,22 @@ import sys
 import subprocess
 import threading
 import webbrowser
+import xml.etree.ElementTree as ET
+import zipfile
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from tkinter import Tk, Canvas, StringVar, IntVar, BooleanVar
+from tkinter import Tk, Canvas, StringVar, IntVar, BooleanVar, PhotoImage
 from tkinter import ttk, filedialog
 
 APP_NAME = "Retrio"
-APP_VERSION = "0.1.0 (bêta)"
+APP_VERSION = "0.2.0 (bêta)"
+
+# ---------------------------------------------------------------------------
+# Icône de l'application (PNG encodé en base64, intégré directement au
+# script pour ne dépendre d'aucun fichier externe au runtime)
+# ---------------------------------------------------------------------------
+ICON_PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADeUlEQVR4nJ2XTW/cNhCGn6G0Wie2dxsHMFIgXvvUa3oK2l8R5B+kQH9sfWoK9FCgHyhQpAGKOKk/urJWIqcHSlotV5Tk8LDSjobvvJwZcoayWJ0qzZD6qZ336JBaMZwY0+ngdkRmR18DjBBvRxYqDipHRabve6sTemGSZ/p5aOCs5u8egen4n8Nkf/Yegfajsu/ZHZu68xizJsH/RmB2hL2GxsEn64W6AmmblX0J3As0ZlGneaUeaaPfwgb4qiCmxq2c1+3bdbLVN2lvZCMEmrnB/mxYiXjDkhjmJ0deMOQEq2xuc9Q6JDWd9I8RiMW+ZqXWMTt+xMnXF2SLx56jgHQYC1LzFVSV8nbN1ds/KW/WSJIwFBMzHC9FjPDkxTkHT49R58ApOA3eFbUOZyuctcyfHPH0xQUYM2jcE4gOv/r06IBseYjbVCCCGMGIkCQJxiSIGFQVVecBRXCbitnxI2bHB6h1DMVsuwv2dLTh4R3cyRFrLUWee5HCPMswxnRnIapIk61hfu0QaBR6PBByMSJUVcXyiyWr1YrKVjir/PHb75RlSZKmSJ10U3fitP1Sr0DrVZVFyavXr3j27EvOL8558/13GGNQ51BVnAvMawjWJRCj2nWAblGMGPL7nJubG/I85+rDBw4PDzFJgnVuG82oC3Y/pPvu76nzWsNq/a7g1PH87DlnZ2dc/nDJ9ad/WSyXfncAWp9wYwW0JwSRGl4bttayWCxI0xnv/37PTz++5eU3L1mdryiLTScJp1VvWZyfRpwlqLXMFo85/far+uAB5xzz+ZzZLEUVyrIkyzIqa8nXa78basv/XP5Kef0fkibREzEdIdguwamvWCJQFAX5fd6efPk6xxiDSUybrHsejIxhAuIPI3XecIMrIqQm9Seg+NNSUVwdf9Tr4Nxo9RzYhh64uisorm4x2YymOqn6UDiaPb+tCSgk8xnFxzvKu3vEDJxCUzyAKJ9+/gutHNnJUS3veKP92dpZv/vI9S/vBqFbE/Ek3A5VX3SSgyxoHHq6GFXs/aatG2NjPAmp45kItii7woZeh6nnMJT1IeFJBFr1ZkWN8bB/l6ZRnd6TjfQDkdHtIXv7s+lApvfy8SAG4ehrfyMQ9HngQfeNnivPVKD2XvDZF5zuSvs80q0EcSMjOTDRnVE9DZ59BHrBxgxEby087JYD/wNID45gGI7YLQAAAABJRU5ErkJggg=="
 
 # ---------------------------------------------------------------------------
 # Palette (reprend les couleurs du site)
@@ -161,6 +175,20 @@ EXT_AUDIO = {".mp3", ".wav", ".flac", ".aac", ".m4a", ".wma", ".ogg"}
 EXT_DOCS = {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".odt", ".ods", ".odp", ".rtf", ".csv"}
 EXT_ARCHIVES = {".zip", ".rar", ".7z", ".tar", ".gz"}
 
+# Extensions pour lesquelles on tente une extraction du contenu texte
+# (utilisées pour indexer et retrouver un fichier par ce qu'il contient,
+# pas seulement par son nom). Tout est fait avec la bibliothèque standard.
+EXT_TEXT_READABLE = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".html", ".htm", ".ini", ".rtf"}
+EXT_DOCX = {".docx"}
+EXT_XLSX = {".xlsx"}
+EXT_PPTX = {".pptx"}
+
+# Taille max lue par fichier pour l'extraction de contenu (évite de passer
+# un temps disproportionné sur d'énormes fichiers texte/logs).
+MAX_CONTENT_READ_BYTES = 2_000_000
+# Longueur max du contenu conservé en mémoire par fichier (index + aperçu).
+MAX_CONTENT_KEEP_CHARS = 20_000
+
 # Dossiers à ignorer pendant le parcours (dossiers système / techniques)
 SKIP_DIR_NAMES = {
     "$recycle.bin", "system volume information", "windows", "programdata",
@@ -224,6 +252,119 @@ CATEGORY_LABELS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Extraction de contenu (100% bibliothèque standard)
+#
+# But : permettre de retrouver un fichier par ce qu'il CONTIENT (le texte
+# d'une facture, les cellules d'un tableau, le texte d'une présentation...)
+# et pas seulement par son nom de fichier. Chaque fonction est "best effort"
+# et ne lève jamais d'exception vers l'appelant : un fichier illisible ou
+# corrompu est simplement ignoré pour l'indexation de contenu (son nom
+# reste malgré tout cherchable).
+# ---------------------------------------------------------------------------
+
+def _read_plain_text(path: str) -> str:
+    try:
+        with open(path, "rb") as f:
+            raw = f.read(MAX_CONTENT_READ_BYTES)
+        for encoding in ("utf-8", "cp1252", "latin-1"):
+            try:
+                return raw.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+        return raw.decode("utf-8", errors="ignore")
+    except Exception:
+        return ""
+
+
+def _read_csv_text(path: str) -> str:
+    text = _read_plain_text(path)
+    if not text:
+        return ""
+    try:
+        reader = csv.reader(io.StringIO(text[:MAX_CONTENT_READ_BYTES]))
+        rows = []
+        for i, row in enumerate(reader):
+            if i > 2000:
+                break
+            rows.append(" ".join(row))
+        return "\n".join(rows)
+    except Exception:
+        return text
+
+
+def _xml_text(xml_bytes: bytes) -> str:
+    try:
+        root = ET.fromstring(xml_bytes)
+        return " ".join(t.strip() for t in root.itertext() if t and t.strip())
+    except Exception:
+        return ""
+
+
+def _read_docx_text(path: str) -> str:
+    try:
+        with zipfile.ZipFile(path) as z:
+            data = z.read("word/document.xml")
+        return _xml_text(data)
+    except Exception:
+        return ""
+
+
+def _read_xlsx_text(path: str) -> str:
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = [n for n in z.namelist() if n.startswith("xl/worksheets/") and n.endswith(".xml")]
+            shared = ""
+            if "xl/sharedStrings.xml" in z.namelist():
+                shared = _xml_text(z.read("xl/sharedStrings.xml"))
+            parts = [shared]
+            for n in names[:20]:  # limite raisonnable de feuilles parcourues
+                parts.append(_xml_text(z.read(n)))
+        return " ".join(p for p in parts if p)
+    except Exception:
+        return ""
+
+
+def _read_pptx_text(path: str) -> str:
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = sorted(n for n in z.namelist() if re.match(r"ppt/slides/slide\d+\.xml$", n))
+            parts = []
+            for n in names[:200]:
+                parts.append(_xml_text(z.read(n)))
+        return " ".join(p for p in parts if p)
+    except Exception:
+        return ""
+
+
+def extract_text_content(path: str, ext: str) -> str:
+    """Retourne un extrait texte du fichier pour l'indexation de contenu,
+    ou une chaîne vide si le format n'est pas pris en charge / illisible."""
+    ext = ext.lower()
+    try:
+        if ext == ".csv":
+            text = _read_csv_text(path)
+        elif ext in EXT_TEXT_READABLE:
+            text = _read_plain_text(path)
+            if ext in (".html", ".htm", ".xml"):
+                text = re.sub(r"<[^>]+>", " ", text)
+        elif ext in EXT_DOCX:
+            text = _read_docx_text(path)
+        elif ext in EXT_XLSX:
+            text = _read_xlsx_text(path)
+        elif ext in EXT_PPTX:
+            text = _read_pptx_text(path)
+        else:
+            text = ""
+    except Exception:
+        text = ""
+
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > MAX_CONTENT_KEEP_CHARS:
+        text = text[:MAX_CONTENT_KEEP_CHARS]
+    return text
+
+
 @dataclass
 class FileEntry:
     path: str
@@ -233,6 +374,8 @@ class FileEntry:
     category: str
     size: int
     badly_named: bool
+    content: str = ""          # extrait de contenu indexé (peut être vide)
+    content_lower: str = ""    # version en minuscule, prête pour la recherche
 
 
 @dataclass
@@ -243,6 +386,7 @@ class ScanResult:
     total_size: int = 0
     duplicates_count: int = 0
     badly_named_count: int = 0
+    content_indexed_count: int = 0
     errors: int = 0
 
 
@@ -256,7 +400,8 @@ def human_size(num_bytes: int) -> str:
 
 
 def scan_folders(roots: list, progress_cb=None, stop_flag: threading.Event = None) -> ScanResult:
-    """Parcourt récursivement les dossiers sélectionnés et construit les stats.
+    """Parcourt récursivement les dossiers sélectionnés, construit les stats
+    et indexe le contenu texte des documents reconnus (voir extract_text_content).
 
     progress_cb(n_files, current_path) est appelé régulièrement pour permettre
     une mise à jour de l'interface pendant le scan (qui tourne dans un thread
@@ -284,17 +429,27 @@ def scan_folders(roots: list, progress_cb=None, stop_flag: threading.Event = Non
                     continue
 
                 stem, ext = os.path.splitext(filename)
+                ext = ext.lower()
                 category = categorize(ext)
                 badly_named = is_badly_named(stem)
+
+                content = ""
+                # On ne tente l'extraction que sur des fichiers de taille
+                # raisonnable, pour ne jamais bloquer l'analyse sur un très
+                # gros fichier.
+                if stat.st_size <= MAX_CONTENT_READ_BYTES * 3:
+                    content = extract_text_content(full_path, ext)
 
                 entry = FileEntry(
                     path=full_path,
                     name=filename,
                     stem=stem,
-                    ext=ext.lower(),
+                    ext=ext,
                     category=category,
                     size=stat.st_size,
                     badly_named=badly_named,
+                    content=content,
+                    content_lower=content.lower(),
                 )
                 result.entries.append(entry)
                 result.counts_by_category[category] += 1
@@ -302,6 +457,8 @@ def scan_folders(roots: list, progress_cb=None, stop_flag: threading.Event = Non
                 result.total_size += stat.st_size
                 if badly_named:
                     result.badly_named_count += 1
+                if content:
+                    result.content_indexed_count += 1
                 if stat.st_size > 0:
                     size_index[(stat.st_size, filename.lower())].append(full_path)
 
@@ -320,24 +477,54 @@ def scan_folders(roots: list, progress_cb=None, stop_flag: threading.Event = Non
 
 
 # ---------------------------------------------------------------------------
-# Recherche (démo par mots-clés avec quelques synonymes, en attendant une
-# vraie recherche en langage naturel dans une version future)
+# Recherche en langage courant
+#
+# La recherche combine plusieurs signaux pour se rapprocher d'une requête
+# "comme on parle" plutôt que d'une simple correspondance exacte :
+#   1. Mots du nom de fichier (poids fort, y compris correspondance floue
+#      pour tolérer les fautes de frappe grâce à difflib)
+#   2. Mots du CONTENU du fichier, quand celui-ci a pu être indexé
+#      (documents Word/Excel/PowerPoint, texte, CSV, HTML...)
+#   3. Mots du chemin / des dossiers parents
+#   4. Synonymes usuels (facture ~ reçu, photo ~ image...)
+#   5. Bonus si la requête entière apparaît telle quelle (nom ou contenu)
+#
+# Limite honnête : Retrio ne "regarde" pas l'intérieur d'une image ou d'une
+# vidéo (reconnaître un objet, un logo, un visage sur une photo demande un
+# modèle de vision par ordinateur, ce qui sort du cadre d'un petit outil
+# 100% local et sans dépendance). Une image ne peut donc être retrouvée que
+# par son nom de fichier, son dossier, ou — si Retrio en a l'occasion plus
+# tard — un texte que l'utilisateur y aura associé lui-même (légende, nom
+# de dossier explicite...).
 # ---------------------------------------------------------------------------
 SYNONYMS = {
-    "facture": ["facture", "invoice", "reçu", "recu"],
-    "assurance": ["assurance", "contrat", "attestation"],
-    "photo": ["photo", "image", "img", "dsc"],
-    "video": ["video", "vidéo", "film", "mov"],
-    "musique": ["musique", "son", "audio", "mp3"],
-    "devis": ["devis", "estimation", "proposition"],
-    "cv": ["cv", "curriculum", "resume"],
-    "impot": ["impot", "impôt", "taxe", "fiscal"],
-    "banque": ["banque", "releve", "relevé", "compte"],
+    "facture": ["facture", "invoice", "reçu", "recu", "note"],
+    "assurance": ["assurance", "contrat", "attestation", "police"],
+    "photo": ["photo", "image", "img", "dsc", "photos"],
+    "logo": ["logo", "marque", "icone", "icône", "brand"],
+    "video": ["video", "vidéo", "film", "mov", "clip"],
+    "musique": ["musique", "son", "audio", "mp3", "chanson"],
+    "devis": ["devis", "estimation", "proposition", "offre"],
+    "cv": ["cv", "curriculum", "resume", "candidature"],
+    "impot": ["impot", "impôt", "taxe", "fiscal", "declaration"],
+    "banque": ["banque", "releve", "relevé", "compte", "virement"],
+    "contrat": ["contrat", "bail", "convention", "accord"],
+    "carte": ["carte", "id", "identite", "identité", "passeport"],
+}
+
+STOPWORDS = {
+    "le", "la", "les", "un", "une", "des", "de", "du", "avec", "et", "ou",
+    "sur", "dans", "pour", "mon", "ma", "mes", "au", "aux", "ce", "cette",
+    "the", "a", "an", "with", "and", "or", "for", "of", "my",
 }
 
 
+def _tokenize(text: str) -> list:
+    return re.findall(r"[a-zà-ÿ0-9]+", text.lower())
+
+
 def expand_query(query: str) -> list:
-    tokens = re.findall(r"[a-zà-ÿ0-9]+", query.lower())
+    tokens = [t for t in _tokenize(query) if t not in STOPWORDS] or _tokenize(query)
     expanded = set(tokens)
     for token in tokens:
         for key, syns in SYNONYMS.items():
@@ -347,18 +534,95 @@ def expand_query(query: str) -> list:
     return list(expanded)
 
 
+def _fuzzy_token_score(token: str, haystack_tokens: set) -> float:
+    """Tolère les fautes de frappe / accords approximatifs : renvoie le
+    meilleur score de similarité (0 à 1) entre `token` et les mots du texte
+    comparé, via difflib (bibliothèque standard, pas d'IA)."""
+    if not haystack_tokens:
+        return 0.0
+    best = 0.0
+    for h in haystack_tokens:
+        if abs(len(h) - len(token)) > 3:
+            continue
+        ratio = difflib.SequenceMatcher(None, token, h).ratio()
+        if ratio > best:
+            best = ratio
+    return best
+
+
 def search_entries(entries: list, query: str, limit: int = 60) -> list:
-    if not query.strip():
+    query = query.strip()
+    if not query:
         return []
     tokens = expand_query(query)
+    query_lower = query.lower()
+
     scored = []
     for entry in entries:
-        haystack = f"{entry.name} {entry.path}".lower()
-        score = sum(1 for t in tokens if t in haystack)
-        if score > 0:
+        name_lower = entry.name.lower()
+        stem_tokens = set(_tokenize(entry.stem))
+        path_lower = entry.path.lower()
+        content_lower = entry.content_lower
+
+        score = 0.0
+        matched_any = False
+
+        for t in tokens:
+            if t in name_lower:
+                score += 5
+                matched_any = True
+            elif _fuzzy_token_score(t, stem_tokens) >= 0.82:
+                score += 3
+                matched_any = True
+
+            if content_lower and t in content_lower:
+                score += 2
+                matched_any = True
+
+            if t in path_lower and t not in name_lower:
+                score += 1
+                matched_any = True
+
+        # Bonus : la requête complète apparaît telle quelle
+        if query_lower in name_lower:
+            score += 8
+            matched_any = True
+        if content_lower and query_lower in content_lower:
+            score += 6
+            matched_any = True
+
+        # Petit malus pour les fichiers dont le nom ne dit rien (on les
+        # laisse remonter uniquement si le CONTENU correspond vraiment).
+        if entry.badly_named and not (content_lower and any(t in content_lower for t in tokens)):
+            score *= 0.85
+
+        if matched_any and score > 0:
             scored.append((score, entry))
+
     scored.sort(key=lambda pair: (-pair[0], pair[1].name.lower()))
     return [e for _, e in scored[:limit]]
+
+
+def content_snippet(entry, query: str, radius: int = 60) -> str:
+    """Construit un court extrait du contenu autour du premier mot-clé
+    trouvé, pour montrer à l'utilisateur POURQUOI ce fichier est remonté."""
+    if not entry.content:
+        return ""
+    tokens = expand_query(query)
+    lower = entry.content_lower
+    best_pos = -1
+    for t in tokens:
+        pos = lower.find(t)
+        if pos != -1 and (best_pos == -1 or pos < best_pos):
+            best_pos = pos
+    if best_pos == -1:
+        return ""
+    start = max(0, best_pos - radius)
+    end = min(len(entry.content), best_pos + radius)
+    snippet = entry.content[start:end].strip()
+    prefix = "… " if start > 0 else ""
+    suffix = " …" if end < len(entry.content) else ""
+    return f"{prefix}{snippet}{suffix}"
 
 
 # ---------------------------------------------------------------------------
@@ -382,6 +646,7 @@ class RetrioApp:
         self.root.geometry("1180x780")
         self.root.minsize(980, 640)
         self.root.configure(bg=COLOR_BG)
+        self._set_app_icon()
 
         self.known_folders = get_known_folders()
         self.folder_vars: dict = {}
@@ -395,6 +660,18 @@ class RetrioApp:
         self._build_style()
         self._build_layout()
         self.root.after(100, self._poll_queue)
+
+    # -- icône ---------------------------------------------------------------
+    def _set_app_icon(self):
+        """Applique le logo Retrio comme icône de fenêtre (barre des tâches,
+        barre de titre). L'icône est embarquée en base64 dans le script :
+        aucun fichier externe n'est nécessaire au lancement."""
+        try:
+            icon_img = PhotoImage(data=ICON_PNG_B64)
+            self.root.iconphoto(True, icon_img)
+            self._icon_img_ref = icon_img  # évite le garbage-collection
+        except Exception:
+            pass
 
     # -- style -------------------------------------------------------------
     def _build_style(self):
@@ -536,6 +813,7 @@ class RetrioApp:
             ("images", "Photos trouvées", "0"),
             ("videos", "Vidéos trouvées", "0"),
             ("audio", "Fichiers audio", "0"),
+            ("content_indexed", "Fichiers indexés (contenu)", "0"),
             ("duplicates", "Doublons potentiels", "0"),
             ("badly_named", "Fichiers mal nommés", "0"),
             ("total_size", "Espace occupé", "0 o"),
@@ -574,7 +852,7 @@ class RetrioApp:
         self.analyze_btn.config(state="disabled", text="Analyse en cours…")
         self.progress.pack(fill="x", padx=28, pady=(0, 6))
         self.progress.start(12)
-        self.status_var.set("Analyse en cours…")
+        self.status_var.set("Analyse en cours (lecture du contenu des documents)…")
         self.stop_flag = threading.Event()
 
         def progress_cb(n_files, current_path):
@@ -607,7 +885,8 @@ class RetrioApp:
         self.progress.pack_forget()
         self.analyze_btn.config(state="normal", text="▶  Relancer l'analyse")
         self.status_var.set(
-            f"Analyse terminée : {result.total_files} fichiers, {human_size(result.total_size)}."
+            f"Analyse terminée : {result.total_files} fichiers, {human_size(result.total_size)} "
+            f"— {result.content_indexed_count} fichiers indexés en contenu."
         )
 
         self.stat_widgets["total_files"].config(text=str(result.total_files))
@@ -615,6 +894,7 @@ class RetrioApp:
         self.stat_widgets["images"].config(text=str(result.counts_by_category.get("images", 0)))
         self.stat_widgets["videos"].config(text=str(result.counts_by_category.get("videos", 0)))
         self.stat_widgets["audio"].config(text=str(result.counts_by_category.get("audio", 0)))
+        self.stat_widgets["content_indexed"].config(text=str(result.content_indexed_count))
         self.stat_widgets["duplicates"].config(text=str(result.duplicates_count))
         self.stat_widgets["badly_named"].config(text=str(result.badly_named_count))
         self.stat_widgets["total_size"].config(text=human_size(result.total_size))
@@ -633,9 +913,9 @@ class RetrioApp:
         self.results_count_var.set(
             f"{len(matches)} résultat(s) pour « {query} »" if query.strip() else ""
         )
-        self._render_results(matches)
+        self._render_results(matches, query)
 
-    def _render_results(self, matches: list):
+    def _render_results(self, matches: list, query: str = ""):
         for widget in self.results_list_frame.winfo_children():
             widget.destroy()
 
@@ -659,6 +939,12 @@ class RetrioApp:
 
             ttk.Label(row, text=os.path.dirname(entry.path), style="Card.TLabel",
                       foreground=COLOR_TEXT_MUTED).pack(anchor="w")
+
+            snippet = content_snippet(entry, query) if query else ""
+            if snippet:
+                ttk.Label(row, text=f"«  {snippet}  »", style="Card.TLabel",
+                          foreground=COLOR_ACCENT, font=(FONT_FAMILY, 9, "italic"),
+                          wraplength=1000).pack(anchor="w", pady=(4, 0))
 
             btn_row = ttk.Frame(row, style="Card.TFrame")
             btn_row.pack(anchor="w", pady=(6, 0))
@@ -692,7 +978,7 @@ class RetrioApp:
 
 def main():
     root = Tk()
-    Mretrio.pyLocaleApp(root)
+    RetrioApp(root)
     root.mainloop()
 
 
