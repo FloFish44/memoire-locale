@@ -14,8 +14,8 @@ echo Installation de PyInstaller (si necessaire)...
 python -m pip install --upgrade pyinstaller >nul
 
 echo Compilation de l'executable...
-python -m PyInstaller --noconfirm --onefile --windowed --name "Memoire_locale" memoire_locale.py
+python -m PyInstaller --noconfirm --onefile --windowed --name "Retrio" retrio.py
 
 echo.
-echo Termine. Executable disponible dans dist\Memoire_locale.exe
+echo Termine. Executable disponible dans dist\Retrio.exe
 pause
