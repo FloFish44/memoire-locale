@@ -11,7 +11,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-python memoire_locale.py
+python retrio.py
 if errorlevel 1 (
     echo.
     echo Une erreur s'est produite. Fermez cette fenetre pour l'analyser.
