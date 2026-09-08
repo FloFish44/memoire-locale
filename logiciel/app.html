@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Retrio</title>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div class="brand-text">
+        <div class="brand-name">Retrio</div>
+        <div class="brand-sub">Vos fichiers, en un instant</div>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-tab="recherche">
+        <span class="nav-icon-wrap"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg></span>
+        <span class="nav-label">Recherche</span>
+      </button>
+
+      <button class="nav-item locked" data-tab="doublons">
+        <span class="nav-icon-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></span>
+        <span class="nav-label">Doublons</span>
+        <span class="nav-right">
+          <span class="badge">3 751</span>
+          <svg class="icon lock-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </span>
+      </button>
+
+      <button class="nav-item locked" data-tab="ranger">
+        <span class="nav-icon-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg></span>
+        <span class="nav-label">Ranger vos documents</span>
+        <span class="nav-right">
+          <span class="badge">1 858</span>
+          <svg class="icon lock-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </span>
+      </button>
+
+      <button class="nav-item locked" data-tab="nettoyage">
+        <span class="nav-icon-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M14.5 3.5 20.5 9.5 9.5 20.5H3.5v-6L14.5 3.5Z"/><path d="M13 5 19 11"/></svg></span>
+        <span class="nav-label">Nettoyage</span>
+        <span class="nav-right">
+          <span class="badge">3,7 Go</span>
+          <svg class="icon lock-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="privacy-note">
+        <span class="dot"></span>
+        <div>
+          <div class="privacy-title">Vos données restent ici.</div>
+          <div class="privacy-sub">Rien n'est envoyé sur Internet.</div>
+        </div>
+      </div>
+
+      <div class="pro-card">
+        <div class="pro-title">Passer à Retrio Pro</div>
+        <div class="pro-sub">Doublons, rangement automatique et plus encore.</div>
+        <button class="btn btn-pro">Découvrir</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="main-inner">
+      <h1 class="headline">Bonjour !</h1>
+      <p class="subhead">Retrouvez vos fichiers en un instant.</p>
+
+      <button class="settings-toggle" id="settingsToggle">
+        <span class="chevron" id="settingsChevron">▾</span> Dossiers à analyser / réglages
+      </button>
+
+      <div class="settings-panel" id="settingsPanel">
+        <div class="settings-inner">
+          <div class="settings-label">Dossiers à analyser</div>
+          <div class="folder-checks" id="folderChecks"><!-- injected --></div>
+          <div class="add-row">
+            <button class="btn btn-outline btn-pill" id="addFolderBtn">+ Ajouter un autre dossier…</button>
+            <span class="custom-folders-label" id="customFoldersLabel"></span>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-primary" id="analyzeBtn">▶&nbsp; Analyse</button>
+            <span class="status-text" id="statusText">Sélectionnez au moins un dossier, puis cliquez sur Analyse.</span>
+          </div>
+          <div class="progress-track" id="progressTrack" hidden><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#1B4332"></div>
+          <div class="stat-num" id="statFiles">0</div>
+          <div class="stat-label">Fichiers analysés</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#D9C185"></div>
+          <div class="stat-num" id="statPdf">0</div>
+          <div class="stat-label">PDF trouvés</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#C9A187"></div>
+          <div class="stat-num" id="statImages">0</div>
+          <div class="stat-label">Photos trouvées</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#1B4332"></div>
+          <div class="stat-num" id="statSize">0 o</div>
+          <div class="stat-label">Espace occupé</div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tabRecherche">
+        <div class="search-row">
+          <div class="search-input-wrap">
+            <svg class="icon search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
+            <input type="text" id="searchInput" placeholder="Une facture, un contrat, un souvenir…" />
+          </div>
+          <button class="btn btn-primary" id="searchBtn">Rechercher</button>
+        </div>
+
+        <div class="sugg-row">
+          <span class="sugg-label">Essayez :</span>
+          <button class="chip chip-suggest" data-q="facture">facture</button>
+          <button class="chip chip-suggest" data-q="photo vacances">photo vacances</button>
+          <button class="chip chip-suggest" data-q="devis">devis</button>
+          <button class="chip chip-suggest" data-q="assurance">assurance</button>
+        </div>
+
+        <div class="filter-row" id="filterRow">
+          <button class="chip chip-filter active" data-key="tous">Tous (0)</button>
+          <button class="chip chip-filter" data-key="pdf">PDF (0)</button>
+          <button class="chip chip-filter" data-key="image">Images (0)</button>
+          <button class="chip chip-filter" data-key="doc">Documents (0)</button>
+        </div>
+
+        <div class="results-count" id="resultsCount"></div>
+        <div class="results-list" id="resultsList">
+          <div class="empty-state">Lancez une recherche pour voir vos fichiers.</div>
+        </div>
+      </div>
+
+      <!-- locked tabs -->
+      <div class="tab-content locked-tab" id="tabDoublons" hidden></div>
+      <div class="tab-content locked-tab" id="tabRanger" hidden></div>
+      <div class="tab-content locked-tab" id="tabNettoyage" hidden></div>
+    </div>
+  </main>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
