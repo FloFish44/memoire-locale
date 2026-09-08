@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Retrio — Retrouvez vos fichiers</title>
+<meta name="description" content="Retrio : le logiciel Windows qui retrouve vos documents même quand leur nom ne veut rien dire. 100% local, rien n'est envoyé sur Internet." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:#F5F1E6;color:#17241C;font-family:"Inter",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:#2F6B4A;text-decoration:none}
+  a:hover{color:#1B4332}
+  .wrap{max-width:1180px;margin:0 auto;padding-left:28px;padding-right:28px}
+  .btn{display:inline-block;border-radius:999px;font-weight:700;cursor:pointer;transition:background .2s,transform .2s,border-color .2s,color .2s}
+  @keyframes mlpop{from{transform:translateY(8px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+  @keyframes mlfloat{0%,100%{transform:translateY(0) rotate(-1.2deg)}50%{transform:translateY(-10px) rotate(-0.4deg)}}
+  @keyframes mlripple{from{transform:translate(-50%,-50%) scale(.3);opacity:.55}to{transform:translate(-50%,-50%) scale(2.4);opacity:0}}
+  .ml-mock{animation:mlfloat 6s ease-in-out infinite}
+  .ml-mock:hover{animation-play-state:paused}
+  header{position:sticky;top:0;z-index:50;background:rgba(245,241,230,.92);backdrop-filter:blur(8px);border-bottom:1px solid #DED4BC}
+  .cursor{position:absolute;width:20px;height:22px;transform:translate(-15%,-8%);pointer-events:none;z-index:30;clip-path:polygon(0 0,0 70%,26% 56%,44% 100%,60% 90%,40% 52%,72% 50%);background:#14251C;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));transition:left .6s cubic-bezier(.4,0,.2,1),top .6s cubic-bezier(.4,0,.2,1),opacity .3s ease;opacity:0}
+  .ripple{position:absolute;width:26px;height:26px;border-radius:50%;background:#2F6B4A;pointer-events:none;z-index:19;transform:translate(-50%,-50%);animation:mlripple .5s ease-out forwards;display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding-top:17px;padding-bottom:17px;display:flex;align-items:center;justify-content:space-between;gap:24px">
+    <a href="#" style="display:flex;align-items:center;gap:11px;color:#14251C;font-weight:700;font-size:1.05rem;letter-spacing:-0.01em">
+      <span style="width:32px;height:32px;border-radius:9px;background:#1B4332;color:#F5F1E6;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.05rem">R</span>
+      <span>Retrio</span>
+    </a>
+    <nav style="display:flex;gap:28px;align-items:center;flex-wrap:wrap">
+      <a href="#experience" style="color:#3C4A40;font-size:.92rem;font-weight:600">L'expérience</a>
+      <a href="#confidentialite" style="color:#3C4A40;font-size:.92rem;font-weight:600">Confidentialité</a>
+      <a class="btn" href="#telechargement" style="color:#F5F1E6;background:#1B4332;padding:10px 20px;font-size:.9rem" onmouseover="this.style.background='#2F6B4A'" onmouseout="this.style.background='#1B4332'">Télécharger</a>
+    </nav>
+  </div>
+</header>
+
+<section class="wrap" style="padding-top:74px;padding-bottom:30px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:56px;align-items:center">
+    <div style="min-width:0">
+      <h1 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.6rem,5.6vw,4.2rem);line-height:1.04;letter-spacing:-0.015em;margin:0 0 22px;color:#14251C">Vos fichiers.<br /><span style="color:#2F6B4A;font-style:italic">Enfin retrouvés.</span></h1>
+      <p style="color:#4C5A50;font-size:1.1rem;line-height:1.6;max-width:44ch;margin:0 0 30px">Décrivez ce que vous cherchez, Retrio retrouve le contenu — même derrière un nom illisible.</p>
+      <a class="btn" href="#telechargement" style="border:1.5px solid #C9BE9F;color:#14251C;padding:15px 24px;font-size:.98rem" onmouseover="this.style.borderColor='#1B4332';this.style.color='#1B4332'" onmouseout="this.style.borderColor='#C9BE9F';this.style.color='#14251C'">Télécharger</a>
+      <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:40px">
+        <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">100%</div><div style="color:#5B7364;font-size:.82rem">local, sans cloud</div></div>
+        <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">Gratuit</div><div style="color:#5B7364;font-size:.82rem">sans condition</div></div>
+        <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">3 clics</div><div style="color:#5B7364;font-size:.82rem">pour retrouver un fichier</div></div>
+      </div>
+    </div>
+    <div style="min-width:0">
+      <div class="ml-mock" style="background:#14251C;border-radius:16px;box-shadow:0 30px 60px rgba(20,37,28,.35);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#0E1B14">
+          <span style="width:9px;height:9px;border-radius:50%;background:#4A6156"></span><span style="width:9px;height:9px;border-radius:50%;background:#4A6156"></span><span style="width:9px;height:9px;border-radius:50%;background:#4A6156"></span>
+          <span style="margin-left:8px;color:#8FA398;font-size:.75rem;font-family:'IBM Plex Mono',monospace">retrio</span>
+        </div>
+        <div id="hero-rows" style="padding:22px;display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="experience" class="wrap" style="padding-top:80px;padding-bottom:80px">
+  <div style="position:relative">
+    <div aria-hidden="true" style="position:absolute;top:-46px;left:-6px;font-family:'Fraunces',serif;font-weight:700;font-size:7.5rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px #DED4BC">01</div>
+    <div style="position:relative;z-index:1">
+      <div style="color:#2F6B4A;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px">L'expérience</div>
+      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#14251C">Le nom vous échappe. <span style="color:#2F6B4A;font-style:italic">Pas le document.</span></h2>
+      <p style="color:#4C5A50;max-width:60ch;line-height:1.6;font-size:1.02rem;margin:0">Regardez Retrio à l'œuvre : la démonstration tourne seule, en boucle. Elle n'analyse aucun de vos fichiers — tout se passe dans votre navigateur.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:34px;background:#14251C;border-radius:20px;overflow:hidden;box-shadow:0 30px 70px rgba(20,37,28,.22);position:relative">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 20px;background:#0E1B14">
+      <span style="width:10px;height:10px;border-radius:50%;background:#4A6156"></span><span style="width:10px;height:10px;border-radius:50%;background:#4A6156"></span><span style="width:10px;height:10px;border-radius:50%;background:#4A6156"></span>
+      <span style="margin-left:10px;color:#F5F1E6;font-weight:600;font-size:.9rem">Retrio</span>
+      <span style="background:rgba(149,213,178,.18);color:#95D5B2;padding:3px 10px;border-radius:999px;font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;font-weight:700;margin-left:auto">Démonstration automatique</span>
+    </div>
+    <div style="background:#FBF8F0;padding:clamp(22px,3.4vw,36px)">
+      <h3 style="margin:0 0 4px;font-family:'Fraunces',serif;font-weight:600;font-size:1.3rem;color:#14251C">Qu'est-ce qu'on retrouve ?</h3>
+      <div style="color:#7A7161;font-size:.85rem;margin-bottom:22px">La démo joue seule — regardez la recherche se faire</div>
+      <div id="demo-area" style="position:relative">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input id="demo-input" type="text" readonly placeholder="Une facture, un contrat, un souvenir…" style="flex:1 1 240px;min-width:0;padding:16px 18px;border-radius:12px;border:1.5px solid #DED4BC;font-size:1rem;background:#fff;color:#14251C" />
+          <button style="border:none;background:#1B4332;color:#F5F1E6;border-radius:12px;padding:0 26px;font-weight:700;font-size:.94rem;min-height:54px">Rechercher</button>
+        </div>
+        <div id="demo-status" style="margin-top:28px;min-height:20px;font-size:.76rem;color:#5C646D;font-weight:700;text-transform:uppercase;letter-spacing:.06em"></div>
+        <div style="margin-top:12px;min-height:78px">
+          <div id="demo-card" style="display:none;gap:16px;align-items:center;background:#fff;border:1px solid #95D5B2;border-radius:14px;padding:16px;flex-wrap:wrap;box-shadow:0 12px 28px rgba(20,37,28,.10)">
+            <div id="demo-icon" style="width:44px;height:44px;border-radius:11px;background:#1B4332;color:#95D5B2;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;flex-shrink:0">PDF</div>
+            <div style="min-width:0;flex:1 1 200px">
+              <div id="demo-title" style="font-weight:700;font-size:1rem;color:#14251C;margin-bottom:3px"></div>
+              <div id="demo-meta" style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:#7A7161;overflow-wrap:anywhere"></div>
+            </div>
+            <div style="font-size:.82rem;font-weight:700;color:#1B4332;white-space:nowrap">Aperçu →</div>
+          </div>
+        </div>
+        <div id="cursor" class="cursor"></div>
+        <div id="ripple" class="ripple"></div>
+      </div>
+
+      <div id="demo-modal" style="display:none;position:absolute;inset:0;background:rgba(14,27,20,.55);align-items:center;justify-content:center;z-index:40;padding:22px">
+        <div style="background:#FBF8F0;border-radius:16px;width:100%;height:100%;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.35);animation:mlpop .18s ease">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px;background:#1B4332;border-radius:16px 16px 0 0">
+            <strong id="modal-filename" style="font-size:1rem;color:#F5F1E6;font-family:'IBM Plex Mono',monospace"></strong>
+          </div>
+          <div id="modal-photo" style="display:none;padding:clamp(16px,2.5vw,28px);justify-content:center;align-items:center;height:calc(100% - 56px)">
+            <img src="./assets/espagne-2012.jpg" alt="Photo Espagne 2012" style="max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 8px 24px rgba(15,22,32,.2);object-fit:contain" />
+          </div>
+          <div id="modal-invoice" style="display:none;padding:clamp(20px,3vw,34px);justify-content:center">
+            <div style="background:#fff;border-radius:10px;padding:32px 30px;box-shadow:0 8px 24px rgba(15,22,32,.10);color:#2C2C2C;max-width:460px;width:100%">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:2px solid #1B4332;padding-bottom:14px;margin-bottom:14px;flex-wrap:wrap">
+                <div style="font-weight:700;color:#14251C;font-size:1.1rem;min-width:0"><span id="inv-co"></span><small id="inv-cosub" style="display:block;font-weight:400;color:#7A7161;font-size:.78rem;margin-top:3px"></small></div>
+                <div style="text-align:right;font-size:.78rem;color:#7A7161"><span id="inv-numlabel"></span><b id="inv-numval" style="display:block;color:#1A1F26;font-size:.92rem"></b><span id="inv-numsub"></span></div>
+              </div>
+              <table style="width:100%;border-collapse:collapse;margin:14px 0">
+                <thead><tr>
+                  <th id="inv-c1" style="text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#7A7161;border-bottom:1px solid #EEE8D8;padding:7px 4px"></th>
+                  <th id="inv-c2" style="text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#7A7161;border-bottom:1px solid #EEE8D8;padding:7px 4px"></th>
+                  <th id="inv-c3" style="text-align:right;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#7A7161;border-bottom:1px solid #EEE8D8;padding:7px 4px"></th>
+                </tr></thead>
+                <tbody id="inv-rows"></tbody>
+              </table>
+              <div id="inv-total" style="display:none;justify-content:space-between;gap:14px;font-weight:700;font-size:1rem;color:#14251C;padding-top:6px">
+                <span id="inv-total-a"></span><span id="inv-total-c"></span>
+              </div>
+              <div id="inv-footnote" style="margin-top:16px;font-size:.72rem;color:#7A7161;border-top:1px dashed #EEE8D8;padding-top:10px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:22px;padding-top:16px;border-top:1px dashed #DED4BC;font-size:.78rem;color:#5C646D">Démonstration automatique, en boucle · Recherche en langage naturel prévue dans le logiciel</div>
+    </div>
+  </div>
+</section>
+
+<section id="confidentialite" class="wrap" style="padding-top:60px;padding-bottom:60px">
+  <div style="background:#1B4332;border-radius:24px;padding:clamp(30px,4.4vw,58px);position:relative;overflow:hidden">
+    <div aria-hidden="true" style="position:absolute;top:-40px;right:8px;font-family:'Fraunces',serif;font-weight:700;font-size:8rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(245,241,230,.14)">02</div>
+    <div style="position:relative">
+      <div style="color:#95D5B2;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px">Une confiance simple</div>
+      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#F5F1E6">Votre vie privée <span style="color:#95D5B2;font-style:italic">n'a pas à voyager.</span></h2>
+      <p style="color:#C7D9CC;max-width:60ch;line-height:1.6;font-size:1.02rem;margin:0 0 38px">Le logiciel est conçu pour fonctionner entièrement sur votre ordinateur. Vos documents vous appartiennent, leur contenu aussi.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
+        <div style="background:rgba(245,241,230,.07);border-radius:16px;padding:24px">
+          <div style="width:38px;height:38px;border-radius:10px;background:#95D5B2;color:#0E1B14;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">1</div>
+          <h3 style="margin:0 0 9px;font-size:1.05rem;color:#F5F1E6">Vous choisissez les dossiers.</h3>
+          <p style="margin:0;font-size:.9rem;color:#C7D9CC;line-height:1.6">Au premier lancement, indiquez ce que vous souhaitez analyser. Vous gardez la main sur le périmètre, à tout moment.</p>
+        </div>
+        <div style="background:rgba(245,241,230,.07);border-radius:16px;padding:24px">
+          <div style="width:38px;height:38px;border-radius:10px;background:#D9C185;color:#0E1B14;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">2</div>
+          <h3 style="margin:0 0 9px;font-size:1.05rem;color:#F5F1E6">Le traitement reste en local.</h3>
+          <p style="margin:0;font-size:.9rem;color:#C7D9CC;line-height:1.6">Extraction du contenu, index et recherche : tout est traité sur votre ordinateur, sans envoi de vos fichiers ni de vos requêtes.</p>
+        </div>
+        <div style="background:rgba(245,241,230,.07);border-radius:16px;padding:24px">
+          <div style="width:38px;height:38px;border-radius:10px;background:#C9A187;color:#0E1B14;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">3</div>
+          <h3 style="margin:0 0 9px;font-size:1.05rem;color:#F5F1E6">Vos originaux restent intacts.</h3>
+          <p style="margin:0;font-size:.9rem;color:#C7D9CC;line-height:1.6">Cette première version recherche et vous guide. Elle ne renomme, ne déplace et ne supprime aucun document.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="telechargement" class="wrap" style="padding-top:60px;padding-bottom:60px">
+  <div style="background:linear-gradient(135deg,#1B4332,#2F6B4A);border-radius:28px;padding:clamp(34px,5.5vw,64px);text-align:center;box-shadow:0 30px 70px rgba(27,67,50,.3)">
+    <div style="font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:#C7EBD6;margin-bottom:14px">Disponible dès maintenant</div>
+    <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.1rem,4.4vw,3.1rem);margin:0 0 16px;color:#F5F1E6">Téléchargez-moi.</h2>
+    <p style="max-width:58ch;margin:0 auto 32px;line-height:1.6;font-size:1.05rem;color:#DCEAE0">Retrio pour Windows : sélectionnez vos dossiers, lancez l'analyse, retrouvez vos fichiers. 100% local, gratuit.</p>
+    <a class="btn" href="https://github.com/FloFish44/memoire-locale/archive/refs/heads/main.zip" style="background:#F5F1E6;color:#14251C;padding:17px 30px;font-size:.98rem" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='#F5F1E6'">⬇ Télécharger pour Windows</a>
+    <div style="margin-top:22px;font-size:.8rem;color:#9FC2AC;font-family:'IBM Plex Mono',monospace">Windows 10/11 · Aucune inscription, aucune donnée envoyée</div>
+  </div>
+</section>
+
+<section class="wrap" style="padding-top:70px;padding-bottom:54px;text-align:center">
+  <div style="color:#5B7364;font-weight:700;letter-spacing:.07em;font-size:.76rem;text-transform:uppercase">Moins de dossiers à fouiller. Plus de temps pour vous.</div>
+  <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;font-size:clamp(2.1rem,4.8vw,3.2rem);margin:18px 0 26px;color:#14251C">« Ah, <span style="color:#2F6B4A">le voilà.</span> »</h2>
+  <a class="btn" href="#experience" style="border:1.5px solid #C9BE9F;color:#14251C;padding:16px 30px;font-size:.98rem" onmouseover="this.style.borderColor='#1B4332';this.style.color='#1B4332'" onmouseout="this.style.borderColor='#C9BE9F';this.style.color='#14251C'">Retrouvez cette sensation →</a>
+  <div style="margin-top:16px;color:#5B7364;font-size:.85rem">Disponible dès maintenant, pour Windows</div>
+</section>
+
+<section class="wrap" style="padding-bottom:70px">
+  <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.6rem,2.6vw,2rem);margin:0 0 26px;color:#14251C">Questions fréquentes</h2>
+  <div style="display:grid;gap:14px">
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:14px;padding:20px 24px">
+      <h3 style="margin:0 0 8px;font-size:1rem;color:#14251C">Je n'arrive pas à télécharger Retrio.</h3>
+      <p style="margin:0;color:#4C5A50;font-size:.92rem;line-height:1.6">Vérifiez que votre antivirus ou votre navigateur n'a pas bloqué le fichier téléchargé. Si le problème persiste, écrivez-nous et nous vous enverrons le fichier directement.</p>
+    </div>
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:14px;padding:20px 24px">
+      <h3 style="margin:0 0 8px;font-size:1rem;color:#14251C">Le logiciel ne s'ouvre pas ou plante au lancement.</h3>
+      <p style="margin:0;color:#4C5A50;font-size:.92rem;line-height:1.6">Assurez-vous d'utiliser Windows 10 ou 11. Redémarrez votre ordinateur puis relancez Retrio. Si le problème continue, contactez-nous en décrivant ce qui se passe.</p>
+    </div>
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:14px;padding:20px 24px">
+      <h3 style="margin:0 0 8px;font-size:1rem;color:#14251C">Retrio ne trouve pas un de mes fichiers.</h3>
+      <p style="margin:0;color:#4C5A50;font-size:.92rem;line-height:1.6">Vérifiez que le dossier contenant ce fichier a bien été sélectionné lors de la configuration. Vous pouvez à tout moment ajouter ou retirer des dossiers depuis les réglages.</p>
+    </div>
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:14px;padding:20px 24px">
+      <h3 style="margin:0 0 8px;font-size:1rem;color:#14251C">Une autre question ?</h3>
+      <p style="margin:0;color:#4C5A50;font-size:.92rem;line-height:1.6">Écrivez-nous à <a href="mailto:contact@retrio-app.fr">contact@retrio-app.fr</a>, nous répondons rapidement.</p>
+    </div>
+  </div>
+</section>
+
+<footer style="border-top:1px solid #DED4BC">
+  <div class="wrap" style="padding-top:26px;padding-bottom:26px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;color:#5B7364;font-size:.85rem">
+    <div>Retrio — Simplicité. Rapidité. Confidentialité.</div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <a href="#" aria-label="TikTok" style="color:#5B7364"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.82a4.28 4.28 0 0 1-3.14-1.4v9.8a4.9 4.9 0 1 1-4.2-4.85v2.06a2.86 2.86 0 1 0 2.06 2.75V2h2.08a4.28 4.28 0 0 0 3.2 4v-.02Z"/></svg></a>
+      <a href="#" aria-label="Instagram" style="color:#5B7364"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+      <a href="#" aria-label="Facebook" style="color:#5B7364"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7h2.4l.4-3H13.5V9.2c0-.9.3-1.6 1.7-1.6h1.3V5c-.6-.1-1.5-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V11H7.4v3H10v7h3.5Z"/></svg></a>
+      <a href="#" aria-label="YouTube" style="color:#5B7364"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M22 8.4s-.2-1.6-.8-2.3c-.8-.9-1.7-.9-2.1-1C16.3 5 12 5 12 5h0s-4.3 0-7.1.1c-.4 0-1.3.1-2.1 1-.6.7-.8 2.3-.8 2.3S1.8 10.3 1.8 12.2v1.6C1.8 15.7 2 17.6 2 17.6s.2 1.6.8 2.3c.8.9 1.9.9 2.4 1 1.7.2 7 .1 7 .1s4.3 0 7.1-.1c.4 0 1.3-.1 2.1-1 .6-.7.8-2.3.8-2.3s.2-1.9.2-3.8v-1.6c0-1.9-.2-3.8-.2-3.8ZM9.9 15.4V9.4l5.4 3-5.4 3Z"/></svg></a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var heroPairs = [
+    { from: 'SCAN_20240318_001.pdf', to: 'La facture du lave-linge' },
+    { from: 'doc_export_942.pdf', to: "L'attestation d'assurance" },
+    { from: 'IMG_20240206.pdf', to: 'Le devis de déménagement' }
+  ];
+  var heroEl = document.getElementById('hero-rows');
+  var activeHero = 0;
+  function renderHero(){
+    heroEl.innerHTML = '';
+    heroPairs.forEach(function(p,i){
+      var row = document.createElement('div');
+      row.style.display='grid'; row.style.gridTemplateColumns='1fr auto 1.1fr'; row.style.gap='12px';
+      row.style.alignItems='center'; row.style.padding='12px 14px'; row.style.borderRadius='10px';
+      row.style.transition='background .3s ease';
+      row.style.background = i===activeHero ? 'rgba(149,213,178,.14)' : 'transparent';
+      row.innerHTML = '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.78rem;color:#8FA398;overflow-wrap:anywhere">'+p.from+'</span><span style="color:#95D5B2">→</span><span style="font-size:.9rem;font-weight:600;color:#F5F1E6">'+p.to+'</span>';
+      heroEl.appendChild(row);
+    });
+  }
+  renderHero();
+  setInterval(function(){ activeHero=(activeHero+1)%heroPairs.length; renderHero(); }, 2200);
+
+  var docs = [
+    { query:'facture lave-linge', icon:'PDF', filename:'41684346vc.pdf', date:'18 mars 2024', location:'Documents / Maison / Factures',
+      co:'ÉlectroPlus', coSub:"Vente & réparation d'électroménager", numLabel:'Facture n°', numVal:'F-2024-00318', numSub:'18 mars 2024',
+      c1:'Désignation', c2:'Qté', c3:'Prix',
+      rows:[{a:'Lave-linge frontal 9kg — Modèle Zenith 900',b:'1',c:'489,00 €'},{a:'Installation et mise en service',b:'1',c:'39,00 €'},{a:'Reprise ancien appareil',b:'1',c:'-20,00 €'}],
+      total:{a:'Total TTC',c:'508,00 €'}, footnote:'Document fictif généré pour la démonstration — ne correspond à aucune facture réelle.' },
+    { query:'photo en espagne 2012', icon:'JPG', filename:'IMG_20120914.jpg', date:'14 septembre 2012', location:'Documents / Photos / Voyages', image:true },
+    { query:'facture edf de mars', icon:'PDF', filename:'IMG_048213.pdf', date:'5 mars 2024', location:'Documents / Maison / Factures',
+      co:'EDF', coSub:"Fournisseur d'électricité", numLabel:'Facture n°', numVal:'EDF-2024-0305', numSub:'Mars 2024',
+      c1:'Désignation', c2:'Qté', c3:'Prix',
+      rows:[{a:'Consommation électricité — mars',b:'1',c:'86,40 €'},{a:'Abonnement mensuel',b:'1',c:'12,50 €'}],
+      total:{a:'Total TTC',c:'98,90 €'}, footnote:'Document fictif généré pour la démonstration — ne correspond à aucune facture réelle.' }
+  ];
+
+  var demoArea=document.getElementById('demo-area'), input=document.getElementById('demo-input'),
+      status=document.getElementById('demo-status'), card=document.getElementById('demo-card'),
+      icon=document.getElementById('demo-icon'), title=document.getElementById('demo-title'), meta=document.getElementById('demo-meta'),
+      cursor=document.getElementById('cursor'), ripple=document.getElementById('ripple'),
+      modal=document.getElementById('demo-modal'), modalFilename=document.getElementById('modal-filename'),
+      modalPhoto=document.getElementById('modal-photo'), modalInvoice=document.getElementById('modal-invoice'),
+      invCo=document.getElementById('inv-co'), invCoSub=document.getElementById('inv-cosub'),
+      invNumLabel=document.getElementById('inv-numlabel'), invNumVal=document.getElementById('inv-numval'), invNumSub=document.getElementById('inv-numsub'),
+      invC1=document.getElementById('inv-c1'), invC2=document.getElementById('inv-c2'), invC3=document.getElementById('inv-c3'),
+      invRows=document.getElementById('inv-rows'), invTotal=document.getElementById('inv-total'),
+      invTotalA=document.getElementById('inv-total-a'), invTotalC=document.getElementById('inv-total-c'), invFootnote=document.getElementById('inv-footnote');
+
+  function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+  function measure(el){
+    var c = demoArea.getBoundingClientRect(), r = el.getBoundingClientRect();
+    return { x: r.left - c.left + r.width/2, y: r.top - c.top + r.height/2 };
+  }
+  function moveCursor(p){ cursor.style.left=p.x+'px'; cursor.style.top=p.y+'px'; cursor.style.opacity='1'; }
+  function pulse(p){
+    ripple.style.left=p.x+'px'; ripple.style.top=p.y+'px'; ripple.style.display='block';
+    ripple.style.animation='none'; void ripple.offsetWidth; ripple.style.animation='mlripple .5s ease-out forwards';
+    setTimeout(function(){ ripple.style.display='none'; }, 480);
+  }
+  function openModal(doc){
+    modalFilename.textContent = doc.filename;
+    if (doc.image){
+      modalPhoto.style.display='flex'; modalInvoice.style.display='none';
+    } else {
+      modalPhoto.style.display='none'; modalInvoice.style.display='flex';
+      invCo.textContent=doc.co; invCoSub.textContent=doc.coSub;
+      invNumLabel.textContent=doc.numLabel; invNumVal.textContent=doc.numVal; invNumSub.textContent=doc.numSub;
+      invC1.textContent=doc.c1; invC2.textContent=doc.c2; invC3.textContent=doc.c3;
+      invRows.innerHTML='';
+      doc.rows.forEach(function(row){
+        var tr=document.createElement('tr');
+        tr.innerHTML='<td style="padding:9px 4px;border-bottom:1px solid #F3EFE2;font-size:.88rem">'+row.a+'</td><td style="padding:9px 4px;border-bottom:1px solid #F3EFE2;font-size:.88rem">'+row.b+'</td><td style="padding:9px 4px;border-bottom:1px solid #F3EFE2;font-size:.88rem;text-align:right">'+row.c+'</td>';
+        invRows.appendChild(tr);
+      });
+      if (doc.total){ invTotal.style.display='flex'; invTotalA.textContent=doc.total.a; invTotalC.textContent=doc.total.c; } else { invTotal.style.display='none'; }
+      invFootnote.textContent=doc.footnote;
+    }
+    modal.style.display='flex';
+  }
+  function closeModal(){ modal.style.display='none'; }
+
+  async function loop(){
+    var i = 0;
+    while (true){
+      var doc = docs[i % docs.length]; i++;
+      input.value=''; card.style.display='none'; status.textContent=''; closeModal(); cursor.style.opacity='0';
+      await sleep(2800);
+
+      moveCursor(measure(input));
+      await sleep(2600);
+      pulse(measure(input));
+      await sleep(1000);
+
+      for (var c=1;c<=doc.query.length;c++){ input.value = doc.query.slice(0,c); await sleep(180); }
+      await sleep(2200);
+
+      icon.textContent = doc.icon; title.textContent = doc.filename; meta.textContent = doc.date+' · '+doc.location;
+      card.style.display='flex';
+      status.textContent = '1 document trouvé — sur les données de démonstration';
+      await sleep(200);
+
+      moveCursor(measure(card));
+      await sleep(3000);
+      pulse(measure(card));
+      await sleep(1000);
+
+      openModal(doc);
+      await sleep(12000);
+      closeModal();
+      await sleep(2800);
+    }
+  }
+  loop();
+})();
+</script>
+</body>
+</html>
