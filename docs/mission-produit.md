@@ -1,4 +1,4 @@
-# Mémoire locale — Mission du produit
+# Retrio — Mission du produit
 
 Créer un assistant Windows intelligent, simple et rapide pour retrouver un fichier même si son nom est illisible.
 
