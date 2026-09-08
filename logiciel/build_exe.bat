@@ -14,7 +14,7 @@ echo Installation de PyInstaller (si necessaire)...
 python -m pip install --upgrade pyinstaller >nul
 
 echo Compilation de l'executable...
-python -m PyInstaller --noconfirm --onefile --windowed --name "Retrio" retrio.py
+python -m PyInstaller --noconfirm --onefile --windowed --name "Retrio" --icon icon.ico retrio.py
 
 echo.
 echo Termine. Executable disponible dans dist\Retrio.exe
