@@ -1,4 +1,4 @@
-# Mémoire locale — logiciel (bêta)
+# Retrio — logiciel (bêta)
 
 Application Windows qui analyse les dossiers de votre choix (Documents,
 Images, Vidéos, Musique, Téléchargements, disques C:/D:...) et vous permet
@@ -15,7 +15,7 @@ envoi de données sur Internet.
 2. Double-cliquez sur `LANCER.bat` — ou depuis une invite de commandes :
 
    ```bat
-   python memoire_locale.py
+   python retrio.py
    ```
 
 ## Créer un fichier .exe autonome (pour vos clients, sans Python)
@@ -24,7 +24,7 @@ Le script `build_exe.bat` installe [PyInstaller](https://pyinstaller.org/)
 (uniquement le temps de la compilation) puis génère un exécutable unique.
 
 1. Double-cliquez sur `build_exe.bat` sur une machine Windows.
-2. L'exécutable est généré dans `dist\Memoire_locale.exe`.
+2. L'exécutable est généré dans `dist\Retrio.exe`.
 3. C'est ce fichier `.exe` qu'il faut proposer au téléchargement sur le site
    (il n'a besoin de rien d'autre pour fonctionner).
 
