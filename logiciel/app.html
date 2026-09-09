@@ -6,6 +6,8 @@
 <link rel="stylesheet" href="app.css" />
 </head>
 <body>
+<header class="titlebar"><div class="pywebview-drag-region">R &nbsp; Retrio · Vos fichiers, en un instant</div><button id="demoBtn">Besoin d’aide ? Voir la démo</button><button id="minBtn" aria-label="Réduire">—</button><button id="maxBtn" aria-label="Agrandir">□</button><button id="closeBtn" aria-label="Fermer">×</button></header>
+<dialog id="demoDialog"><h2>Retrouvez vos fichiers en 4 étapes</h2><p>1. Choisissez vos dossiers.<br>2. Lancez l’analyse locale.<br>3. Consultez le bilan.<br>4. Décrivez ce que vous cherchez.</p><div class="video-placeholder">La vidéo de démonstration de 20 secondes arrive bientôt.</div><form method="dialog"><button class="btn btn-primary">J’ai compris</button></form></dialog>
 
 <div class="app">
 
@@ -29,7 +31,7 @@
         <span class="nav-icon-wrap"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></span>
         <span class="nav-label">Doublons</span>
         <span class="nav-right">
-          <span class="badge">3 751</span>
+          <span class="badge">Bientôt</span>
           <svg class="icon lock-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         </span>
       </button>
@@ -38,7 +40,7 @@
         <span class="nav-icon-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg></span>
         <span class="nav-label">Ranger vos documents</span>
         <span class="nav-right">
-          <span class="badge">1 858</span>
+          <span class="badge">Bientôt</span>
           <svg class="icon lock-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         </span>
       </button>
@@ -47,7 +49,7 @@
         <span class="nav-icon-wrap"><svg class="icon" viewBox="0 0 24 24"><path d="M14.5 3.5 20.5 9.5 9.5 20.5H3.5v-6L14.5 3.5Z"/><path d="M13 5 19 11"/></svg></span>
         <span class="nav-label">Nettoyage</span>
         <span class="nav-right">
-          <span class="badge">3,7 Go</span>
+          <span class="badge">Bientôt</span>
           <svg class="icon lock-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         </span>
       </button>
@@ -73,12 +75,10 @@
   <!-- ============ MAIN ============ -->
   <main class="main">
     <div class="main-inner">
-      <h1 class="headline">Bonjour !</h1>
-      <p class="subhead">Retrouvez vos fichiers en un instant.</p>
+      <h1 class="headline">Marre de perdre vos fichiers ou photos ?</h1>
+      <p class="subhead">Retrio est la solution. Retrouvez-les simplement, avec vos mots.</p>
 
-      <button class="settings-toggle" id="settingsToggle">
-        <span class="chevron" id="settingsChevron">▾</span> Dossiers à analyser / réglages
-      </button>
+<h2 class="step">1. Choisissez où chercher</h2><p>Vous pouvez modifier cette sélection à tout moment, puis relancer l’analyse.</p>
 
       <div class="settings-panel" id="settingsPanel">
         <div class="settings-inner">
@@ -88,15 +88,17 @@
             <button class="btn btn-outline btn-pill" id="addFolderBtn">+ Ajouter un autre dossier…</button>
             <span class="custom-folders-label" id="customFoldersLabel"></span>
           </div>
-          <div class="action-row">
+          <h2 class="step">2. Analysez pour mieux identifier vos documents</h2><p>Les dossiers techniques Codex et Claude sont exclus. Vos fichiers restent sur cet ordinateur.</p><div class="action-row">
             <button class="btn btn-primary" id="analyzeBtn">▶&nbsp; Analyse</button>
+            <button class="btn btn-outline" id="stopBtn" hidden>Arrêter</button>
             <span class="status-text" id="statusText">Sélectionnez au moins un dossier, puis cliquez sur Analyse.</span>
           </div>
           <div class="progress-track" id="progressTrack" hidden><div class="progress-fill" id="progressFill"></div></div>
         </div>
       </div>
 
-      <div class="stats-row">
+      <div id="pdfReport" role="status" hidden style="padding:14px 18px;margin:12px 0;border:1px solid #DED4BC;border-radius:10px;color:#3C4A40;max-height:180px;overflow:auto;font-size:14px;line-height:1.6"></div>
+      <h2 class="step">3. Voici les fichiers trouvés</h2><div class="stats-row">
         <div class="stat-card">
           <div class="stat-icon" style="background:#1B4332"></div>
           <div class="stat-num" id="statFiles">0</div>
@@ -120,7 +122,7 @@
       </div>
 
       <div class="tab-content" id="tabRecherche">
-        <div class="search-row">
+        <h2 class="step">4. Retrouvez votre fichier avec vos mots</h2><div class="search-row">
           <div class="search-input-wrap">
             <svg class="icon search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
             <input type="text" id="searchInput" placeholder="Une facture, un contrat, un souvenir…" />
@@ -130,7 +132,7 @@
 
         <div class="sugg-row">
           <span class="sugg-label">Essayez :</span>
-          <button class="chip chip-suggest" data-q="facture">facture</button>
+          <button class="chip chip-suggest" data-q="facture edf">facture EDF</button>
           <button class="chip chip-suggest" data-q="photo vacances">photo vacances</button>
           <button class="chip chip-suggest" data-q="devis">devis</button>
           <button class="chip chip-suggest" data-q="assurance">assurance</button>
@@ -143,7 +145,7 @@
           <button class="chip chip-filter" data-key="doc">Documents (0)</button>
         </div>
 
-        <div class="results-count" id="resultsCount"></div>
+        <label class="folder-scope">Chercher dans <select id="folderScope"><option value="">Tous les dossiers analysés</option></select><button class="btn-mini" id="pickScopeBtn">Choisir un sous-dossier…</button></label><div id="feedback" hidden><span id="feedbackText">Ces résultats vous conviennent-ils ?</span> <button class="btn-mini" id="yesBtn">Oui</button> <button class="btn-mini" id="noBtn">Non, affiner</button><p id="refineHelp" hidden>Choisissez un dossier et un type de fichier ci-dessus. Ajoutez un fournisseur, un objet ou un détail distinctif à votre recherche.</p></div><div class="results-count" id="resultsCount"></div>
         <div class="results-list" id="resultsList">
           <div class="empty-state">Lancez une recherche pour voir vos fichiers.</div>
         </div>
