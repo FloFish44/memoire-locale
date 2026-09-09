@@ -1,0 +1,13 @@
+pywebview==6.2.1
+pythonnet==3.1.0
+pypdfium2==5.13.0
+onnxruntime==1.22.1
+numpy==2.2.6
+Pillow==12.3.0
+winrt-runtime==3.2.1; sys_platform == 'win32'
+winrt-Windows.Media.Ocr==3.2.1; sys_platform == 'win32'
+winrt-Windows.Graphics.Imaging==3.2.1; sys_platform == 'win32'
+winrt-Windows.Globalization==3.2.1; sys_platform == 'win32'
+winrt-Windows.Foundation==3.2.1; sys_platform == 'win32'
+winrt-Windows.Foundation.Collections==3.2.1; sys_platform == 'win32'
+winrt-Windows.Storage.Streams==3.2.1; sys_platform == 'win32'

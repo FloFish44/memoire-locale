@@ -10,14 +10,14 @@ un moteur web (WebView2, déjà présent sur Windows 10/11) qui charge la page
 locale app.html : rendu identique au design d'origine (anti-aliasing natif,
 polices exactes), sans jamais rien envoyer sur le réseau.
 
-Ne nécessite aucune dépendance externe pour la logique : uniquement la
-bibliothèque standard de Python. Seule l'interface utilise la dépendance
-`pywebview` (+ pythonnet sur Windows, pour piloter WebView2).
+Lecture PDF : PDFium. OCR : moteur Windows et langues installées localement.
+Interface : pywebview / WebView2. Aucun service de reconnaissance distant.
 
 Lancer :   python retrio_web.py
 Compiler : voir build_web.bat (utilise PyInstaller)
 """
 
+import multiprocessing
 import base64
 import csv
 import ctypes
@@ -35,8 +35,12 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pdf_content import PdfService, read_pdf
+from image_content import ImageReader
+from retrieval import search as search_by_content, evidence
+
 APP_NAME = "Retrio"
-APP_VERSION = "0.3.0 (bêta)"
+APP_VERSION = "0.5.0 (bêta)"
 
 # ---------------------------------------------------------------------------
 # Icône de l'application (PNG encodé en base64, intégré directement au
@@ -56,6 +60,7 @@ ICON_PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADeUlEQVR4nJ2XTW/c
 
 # GUID des dossiers connus Windows (Known Folder API), indépendants de la langue
 KNOWN_FOLDER_GUIDS = {
+    "Bureau": "B4BFCC3A-DB2C-424C-B029-7FE99A87C641",
     "Documents": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
     "Images": "33E28130-4E1E-4676-835A-98395C3BC3BB",
     "Vidéos": "18989B1D-99B5-455B-841C-AB7C74E4DDFC",
@@ -107,6 +112,7 @@ def get_known_folders() -> dict[str, str]:
                 folders[label] = path
         # Repli si l'API Windows échoue : noms de dossiers usuels
         fallback_names = {
+            "Bureau": "Desktop",
             "Documents": "Documents",
             "Images": "Pictures",
             "Vidéos": "Videos",
@@ -121,6 +127,7 @@ def get_known_folders() -> dict[str, str]:
     else:
         # Environnement non-Windows (développement / test sur Linux ou macOS)
         fallback_names = {
+            "Bureau": "Desktop",
             "Documents": "Documents",
             "Images": "Pictures",
             "Vidéos": "Videos",
@@ -181,7 +188,7 @@ MAX_CONTENT_KEEP_CHARS = 20_000
 SKIP_DIR_NAMES = {
     "$recycle.bin", "system volume information", "windows", "programdata",
     "program files", "program files (x86)", "node_modules", ".git", ".cache",
-    "appdata",
+    "appdata", "codex", "claude", ".codex", ".claude", "__pycache__", ".venv",
 }
 
 # Motifs de noms de fichiers "peu parlants" (scan, capture, sans titre...)
@@ -330,7 +337,9 @@ def extract_text_content(path: str, ext: str) -> str:
     ou une chaîne vide si le format n'est pas pris en charge / illisible."""
     ext = ext.lower()
     try:
-        if ext == ".csv":
+        if ext == ".pdf":
+            return "\n\n".join(page["text"] for page in read_pdf(path)["pages"])
+        elif ext == ".csv":
             text = _read_csv_text(path)
         elif ext in EXT_TEXT_READABLE:
             text = _read_plain_text(path)
@@ -364,6 +373,8 @@ class FileEntry:
     badly_named: bool
     content: str = ""          # extrait de contenu indexé (peut être vide)
     content_lower: str = ""    # version en minuscule, prête pour la recherche
+    pages: list = field(default_factory=list)
+    read_status: str = "Nom et emplacement"
 
 
 @dataclass
@@ -376,6 +387,12 @@ class ScanResult:
     badly_named_count: int = 0
     content_indexed_count: int = 0
     errors: int = 0
+    pdf_read: int = 0
+    pdf_ocr: int = 0
+    pdf_unread: int = 0
+    pdf_partial: int = 0
+    cancelled: bool = False
+    pdf_issues: list = field(default_factory=list)
 
 
 def human_size(num_bytes: int) -> str:
@@ -387,81 +404,96 @@ def human_size(num_bytes: int) -> str:
     return f"{size:.1f} Po"
 
 
-def scan_folders(roots: list, progress_cb=None, stop_flag: threading.Event = None) -> ScanResult:
-    """Parcourt récursivement les dossiers sélectionnés, construit les stats
-    et indexe le contenu texte des documents reconnus (voir extract_text_content).
-
-    progress_cb(n_files, current_path) est appelé régulièrement pour permettre
-    une mise à jour de l'interface pendant le scan (qui tourne dans un thread
-    séparé pour ne jamais geler la fenêtre).
-    """
+def scan_folders(roots: list, progress_cb=None, stop_flag=None, cache_dir=None) -> ScanResult:
+    """Read selected local files once. PDF parsing is isolated and cached."""
     result = ScanResult()
-    size_index: dict = defaultdict(list)  # taille -> liste de chemins (détection de doublons)
-
-    for root in roots:
-        for dirpath, dirnames, filenames in os.walk(root, onerror=lambda e: None):
-            if stop_flag is not None and stop_flag.is_set():
-                return result
-
-            # Élague les dossiers système / techniques pour rester rapide et pertinent
-            dirnames[:] = [d for d in dirnames if d.lower() not in SKIP_DIR_NAMES and not d.startswith(".")]
-
-            for filename in filenames:
-                if stop_flag is not None and stop_flag.is_set():
-                    return result
-                full_path = os.path.join(dirpath, filename)
-                try:
-                    stat = os.stat(full_path)
-                except OSError:
-                    result.errors += 1
-                    continue
-
-                stem, ext = os.path.splitext(filename)
-                ext = ext.lower()
-                category = categorize(ext)
-                badly_named = is_badly_named(stem)
-
-                content = ""
-                # On ne tente l'extraction que sur des fichiers de taille
-                # raisonnable, pour ne jamais bloquer l'analyse sur un très
-                # gros fichier.
-                if stat.st_size <= MAX_CONTENT_READ_BYTES * 3:
-                    content = extract_text_content(full_path, ext)
-
-                entry = FileEntry(
-                    path=full_path,
-                    name=filename,
-                    stem=stem,
-                    ext=ext,
-                    category=category,
-                    size=stat.st_size,
-                    badly_named=badly_named,
-                    content=content,
-                    content_lower=content.lower(),
-                )
-                result.entries.append(entry)
-                result.counts_by_category[category] += 1
-                result.total_files += 1
-                result.total_size += stat.st_size
-                if badly_named:
-                    result.badly_named_count += 1
-                if content:
-                    result.content_indexed_count += 1
-                if stat.st_size > 0:
-                    size_index[(stat.st_size, filename.lower())].append(full_path)
-
-                if progress_cb and result.total_files % 25 == 0:
-                    progress_cb(result.total_files, full_path)
-
-    # Doublons potentiels : même taille + même nom de fichier dans des dossiers différents
-    for key, paths in size_index.items():
-        if len(paths) > 1:
-            result.duplicates_count += len(paths) - 1
-
-    if progress_cb:
-        progress_cb(result.total_files, "")
-
-    return result
+    stop_flag = stop_flag or threading.Event()
+    size_index = defaultdict(list)
+    normalized = sorted(set(os.path.normcase(os.path.abspath(r)) for r in roots), key=len)
+    roots = []
+    for root in normalized:
+        def within(parent):
+            try: return os.path.commonpath([root, parent]) == parent
+            except ValueError: return False
+        if not any(within(parent) for parent in roots): roots.append(root)
+    seen = set()
+    service = None
+    image_reader = None
+    def scan_error(_error): result.errors += 1
+    try:
+        for root in roots:
+            if not os.path.isdir(root):
+                result.errors += 1
+                continue
+            for dirpath, dirnames, filenames in os.walk(root, onerror=scan_error, followlinks=False):
+                if stop_flag.is_set(): break
+                dirnames[:] = [d for d in dirnames if d.lower() not in SKIP_DIR_NAMES and not d.startswith('.') and not os.path.islink(os.path.join(dirpath,d)) and not getattr(os.path,"isjunction",lambda _:False)(os.path.join(dirpath,d))]
+                for filename in filenames:
+                    if stop_flag.is_set(): break
+                    full_path = os.path.abspath(os.path.join(dirpath,filename))
+                    key = os.path.normcase(full_path)
+                    if key in seen: continue
+                    seen.add(key)
+                    try:
+                        info = os.stat(full_path, follow_symlinks=False)
+                        attrs = getattr(info,'st_file_attributes',0)
+                        if os.path.islink(full_path) or attrs & (0x1000 | 0x40000 | 0x400000):
+                            result.errors += 1
+                            continue  # Do not hydrate cloud-only files.
+                    except OSError:
+                        result.errors += 1
+                        continue
+                    stem, ext = os.path.splitext(filename)
+                    ext = ext.lower()
+                    content = ''
+                    pages = []
+                    status = 'Nom et emplacement'
+                    if ext == '.pdf':
+                        if progress_cb: progress_cb(result.total_files, 'Lecture PDF : '+filename)
+                        try:
+                            if service is None: service = PdfService(cache_dir)
+                            details = service.read(full_path,stop_flag,lambda page,total: progress_cb(result.total_files, f'{filename} — page {page}/{total}') if progress_cb else None)
+                        except Exception as exc:
+                            details = dict(pages=[],status='PDF inaccessible : '+type(exc).__name__,issues=[],ocr_pages=0)
+                        pages = details['pages']
+                        content = '\n\n'.join(page['text'] for page in pages)
+                        status = details['status']
+                        if content: result.pdf_read += 1
+                        else: result.pdf_unread += 1
+                        if details.get('ocr_pages'): result.pdf_ocr += 1
+                        if details.get('issues') and content: result.pdf_partial += 1
+                        if not content or details.get('issues'):
+                            result.pdf_issues.append(dict(name=filename,path=full_path,status=status,details=details.get('issues',[])))
+                    elif ext in EXT_IMAGES:
+                        if progress_cb: progress_cb(result.total_files, 'Analyse visuelle : '+filename)
+                        try:
+                            if image_reader is None: image_reader = ImageReader(cache_dir)
+                            tags = image_reader.read(full_path)
+                            content = ' '.join(tags)
+                            status = 'Analyse visuelle locale : '+(', '.join(t.split()[0] for t in tags) if tags else 'sujet non identifié')
+                        except Exception:
+                            status = 'Analyse visuelle indisponible pour cette image'
+                    elif info.st_size <= MAX_CONTENT_READ_BYTES * 3:
+                        content = extract_text_content(full_path,ext)
+                        if content: status = 'Texte indexé'
+                    entry = FileEntry(path=full_path,name=filename,stem=stem,ext=ext,
+                        category=categorize(ext),size=info.st_size,badly_named=is_badly_named(stem),
+                        content=content,content_lower=content.lower(),pages=pages,read_status=status)
+                    result.entries.append(entry)
+                    result.counts_by_category[entry.category] += 1
+                    result.total_files += 1
+                    result.total_size += entry.size
+                    result.badly_named_count += int(entry.badly_named)
+                    result.content_indexed_count += bool(content)
+                    if info.st_size: size_index[(info.st_size,filename.lower())].append(full_path)
+                    if progress_cb and (ext=='.pdf' or result.total_files%25==0): progress_cb(result.total_files,full_path)
+        result.duplicates_count = sum(len(paths)-1 for paths in size_index.values() if len(paths)>1)
+        result.cancelled = stop_flag.is_set()
+        if progress_cb: progress_cb(result.total_files,'')
+        return result
+    finally:
+        if service: service.close()
+        if image_reader: image_reader.close()
 
 
 # ---------------------------------------------------------------------------
@@ -539,78 +571,11 @@ def _fuzzy_token_score(token: str, haystack_tokens: set) -> float:
 
 
 def search_entries(entries: list, query: str, limit: int = 60) -> list:
-    query = query.strip()
-    if not query:
-        return []
-    tokens = expand_query(query)
-    query_lower = query.lower()
-
-    scored = []
-    for entry in entries:
-        name_lower = entry.name.lower()
-        stem_tokens = set(_tokenize(entry.stem))
-        path_lower = entry.path.lower()
-        content_lower = entry.content_lower
-
-        score = 0.0
-        matched_any = False
-
-        for t in tokens:
-            if t in name_lower:
-                score += 5
-                matched_any = True
-            elif _fuzzy_token_score(t, stem_tokens) >= 0.82:
-                score += 3
-                matched_any = True
-
-            if content_lower and t in content_lower:
-                score += 2
-                matched_any = True
-
-            if t in path_lower and t not in name_lower:
-                score += 1
-                matched_any = True
-
-        # Bonus : la requête complète apparaît telle quelle
-        if query_lower in name_lower:
-            score += 8
-            matched_any = True
-        if content_lower and query_lower in content_lower:
-            score += 6
-            matched_any = True
-
-        # Petit malus pour les fichiers dont le nom ne dit rien (on les
-        # laisse remonter uniquement si le CONTENU correspond vraiment).
-        if entry.badly_named and not (content_lower and any(t in content_lower for t in tokens)):
-            score *= 0.85
-
-        if matched_any and score > 0:
-            scored.append((score, entry))
-
-    scored.sort(key=lambda pair: (-pair[0], pair[1].name.lower()))
-    return [e for _, e in scored[:limit]]
+    return search_by_content(entries, query, limit)
 
 
 def content_snippet(entry, query: str, radius: int = 60) -> str:
-    """Construit un court extrait du contenu autour du premier mot-clé
-    trouvé, pour montrer à l'utilisateur POURQUOI ce fichier est remonté."""
-    if not entry.content:
-        return ""
-    tokens = expand_query(query)
-    lower = entry.content_lower
-    best_pos = -1
-    for t in tokens:
-        pos = lower.find(t)
-        if pos != -1 and (best_pos == -1 or pos < best_pos):
-            best_pos = pos
-    if best_pos == -1:
-        return ""
-    start = max(0, best_pos - radius)
-    end = min(len(entry.content), best_pos + radius)
-    snippet = entry.content[start:end].strip()
-    prefix = "… " if start > 0 else ""
-    suffix = " …" if end < len(entry.content) else ""
-    return f"{prefix}{snippet}{suffix}"
+    return evidence(entry,query)['text']
 
 
 # ---------------------------------------------------------------------------
@@ -656,6 +621,9 @@ class Api:
         self.window = None
         self.scan_result = ScanResult()
         self.type_filter = "tous"
+        self._stop = threading.Event()
+        self._scan_lock = threading.Lock()
+        self._scanning = False
 
     def _run_js(self, code):
         try:
@@ -680,25 +648,35 @@ class Api:
 
     # -- analyse -------------------------------------------------------------
     def start_scan(self, roots):
-        threading.Thread(target=self._scan_worker, args=(list(roots),), daemon=True).start()
+        if not isinstance(roots,list) or not roots or not all(isinstance(r,str) and os.path.isabs(r) for r in roots):
+            return False
+        with self._scan_lock:
+            if self._scanning: return False
+            self._scanning = True
+            self._stop.clear()
+        threading.Thread(target=self._scan_worker,args=(roots,),daemon=True).start()
+        return True
+
+    def stop_scan(self):
+        self._stop.set()
         return True
 
     def _scan_worker(self, roots):
-        stop_flag = threading.Event()
-
-        def progress_cb(n_files, current_path):
-            self._run_js(f"window.onScanProgress({n_files}, {json.dumps(current_path)})")
-
-        result = scan_folders(roots, progress_cb=progress_cb, stop_flag=stop_flag)
-        self.scan_result = result
-
-        payload = {
-            "total_files": result.total_files,
-            "total_size_human": human_size(result.total_size),
-            "content_indexed_count": result.content_indexed_count,
-            "counts": dict(result.counts_by_category),
-        }
-        self._run_js(f"window.onScanDone({json.dumps(json.dumps(payload))})")
+        try:
+            def progress_cb(n_files,current_path):
+                self._run_js(f"window.onScanProgress({n_files}, {json.dumps(current_path)})")
+            result = scan_folders(roots,progress_cb=progress_cb,stop_flag=self._stop)
+            self.scan_result = result
+            payload = dict(roots=roots,total_files=result.total_files,total_size_human=human_size(result.total_size),
+                content_indexed_count=result.content_indexed_count,counts=dict(result.counts_by_category),
+                pdf_read=result.pdf_read,pdf_ocr=result.pdf_ocr,pdf_unread=result.pdf_unread,
+                pdf_partial=result.pdf_partial,errors=result.errors,cancelled=result.cancelled,
+                pdf_issues=result.pdf_issues)
+            self._run_js(f"window.onScanDone({json.dumps(json.dumps(payload))})")
+        except Exception as exc:
+            self._run_js(f"window.onScanError({json.dumps('Analyse interrompue : '+type(exc).__name__)})")
+        finally:
+            with self._scan_lock: self._scanning = False
 
     # -- recherche -----------------------------------------------------------
     def _filtered(self, entries, type_filter):
@@ -708,23 +686,41 @@ class Api:
         cat = mapping.get(type_filter)
         return [e for e in entries if e.category == cat]
 
-    def search(self, query, type_filter):
+    def minimize(self): self.window.minimize()
+    def toggle_maximize(self):
+        if getattr(self, '_maximized', False): self.window.restore()
+        else: self.window.maximize()
+        self._maximized = not getattr(self, '_maximized', False)
+    def close_window(self):
+        self._stop.set()
+        self.window.destroy()
+
+    def search(self, query, type_filter, folder=""):
         self.type_filter = type_filter or "tous"
         pool = self._filtered(self.scan_result.entries, self.type_filter)
+        if folder:
+            parent = os.path.normcase(os.path.abspath(folder))
+            pool = [e for e in pool if os.path.normcase(os.path.abspath(e.path)).startswith(parent.rstrip(os.sep)+os.sep)]
         query = query or ""
+        if self.type_filter == 'image':
+            query = re.sub(r'\b(photos?|images?)\b', '', query, flags=re.I).strip()
         if query.strip():
-            matches = search_entries(pool, query)
+            all_matches = search_entries(pool, query, limit=None)
+            matches = all_matches[:60]
         else:
+            all_matches = pool
             matches = pool[:60]
 
         if query.strip():
-            count_label = f"{len(matches)} résultat(s) pour « {query} »"
+            count_label = f"{len(all_matches)} résultat(s) pour « {query} »"
         else:
-            count_label = f"{len(matches)} fichier(s)" if matches else ""
+            count_label = f"{len(all_matches)} fichier(s)" if matches else ""
 
+        if len(all_matches)>60: count_label += " — 60 premiers affichés"
         match_dicts = []
         for entry in matches:
             badge_label, badge_color = file_badge(entry)
+            proof = evidence(entry,query)
             match_dicts.append({
                 "path": entry.path,
                 "name": entry.name,
@@ -733,7 +729,10 @@ class Api:
                 "badly_named": entry.badly_named,
                 "badge_label": badge_label,
                 "badge_color": badge_color,
-                "snippet": content_snippet(entry, query) if query else "",
+                "snippet": proof["text"] if query else "",
+                "page": proof["page"],
+                "method": proof["method"],
+                "read_status": entry.read_status,
             })
         return json.dumps({"matches": match_dicts, "count_label": count_label})
 
@@ -775,6 +774,8 @@ def resource_path(*parts):
 def main():
     import webview
 
+    if sys.platform == 'win32':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('Retrio.Desktop')
     api = Api()
     html_path = resource_path("app.html")
 
@@ -790,6 +791,8 @@ def main():
         APP_NAME,
         url=html_path,
         js_api=api,
+        frameless=True,
+        easy_drag=False,
         width=1220,
         height=800,
         min_size=(1000, 660),
@@ -803,4 +806,8 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    if len(sys.argv) == 3 and sys.argv[1] == "--self-test":
+        from smoke_check import run
+        sys.exit(run(sys.argv[2]))
     main()
