@@ -8,6 +8,7 @@ import sys
 import threading
 import urllib.request
 import zipfile
+import traceback
 
 APP_NAME = "Retrio"
 EXE_NAME = "RetrioWeb.exe"
@@ -70,12 +71,24 @@ class Api:
             INSTALL_DIR.mkdir(parents=True, exist_ok=True)
             opener = urllib.request.build_opener()
             opener.addheaders = [("User-Agent", "Retrio-Installer/0.5 (Windows)")]
-            urllib.request.install_opener(opener)
-
-            def progress(block, size, total):
-                if total > 0:
-                    self.js("updateProgress", min(70, 5 + int(block * size * 65 / total)), "Téléchargement de Retrio…")
-            urllib.request.urlretrieve(DOWNLOAD_URL, archive, reporthook=progress)
+            self.js("updateProgress", 5, "Connexion au téléchargement…")
+            # Lire par blocs de 1 Mio évite les milliers d'appels JavaScript qui
+            # saturaient la fenêtre et faisaient afficher « Ne répond pas ».
+            with opener.open(DOWNLOAD_URL, timeout=30) as response, archive.open("wb") as destination:
+                total = int(response.headers.get("Content-Length", 0))
+                downloaded = 0
+                last_percent = -1
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    destination.write(chunk)
+                    downloaded += len(chunk)
+                    percent = min(70, 5 + int(downloaded * 65 / total)) if total else 10
+                    if percent >= last_percent + 2:
+                        last_percent = percent
+                        detail = f"Téléchargement de Retrio… {downloaded // (1024 * 1024)} Mo"
+                        self.js("updateProgress", percent, detail)
 
             digest = hashlib.sha256()
             with archive.open("rb") as source:
@@ -88,6 +101,7 @@ class Api:
             if staging.exists():
                 shutil.rmtree(staging)
             staging.mkdir()
+            self.js("updateProgress", 78, "Installation des fichiers…")
             with zipfile.ZipFile(archive) as package:
                 base = staging.resolve()
                 for member in package.infolist():
@@ -116,6 +130,10 @@ class Api:
             self.js("installDone")
         except Exception as exc:
             archive.unlink(missing_ok=True)
+            try:
+                (INSTALL_DIR / "installer.log").write_text(traceback.format_exc(), encoding="utf-8")
+            except Exception:
+                pass
             self.js("installFailed", str(exc))
         finally:
             self.running = False
