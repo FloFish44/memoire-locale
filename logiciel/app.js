@@ -21,7 +21,10 @@ whenReady(init);
 
 async function init() {
   bindNav();
-  document.getElementById('demoBtn').onclick = () => document.getElementById('demoDialog').showModal();
+  const demoDialog = document.getElementById('demoDialog');
+  const demoVideo = document.getElementById('demoVideo');
+  document.getElementById('demoBtn').onclick = () => { demoDialog.showModal(); demoVideo.currentTime = 0; demoVideo.play().catch(() => {}); };
+  demoDialog.addEventListener('close', () => demoVideo.pause());
   document.getElementById('minBtn').onclick = () => api().minimize();
   document.getElementById('maxBtn').onclick = () => api().toggle_maximize();
   document.getElementById('closeBtn').onclick = () => api().close_window();
