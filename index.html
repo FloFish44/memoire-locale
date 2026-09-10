@@ -25,6 +25,25 @@
   header{position:sticky;top:0;z-index:50;background:rgba(245,241,230,.92);backdrop-filter:blur(8px);border-bottom:1px solid #DED4BC}
   .cursor{position:absolute;width:20px;height:22px;transform:translate(-15%,-8%);pointer-events:none;z-index:30;clip-path:polygon(0 0,0 70%,26% 56%,44% 100%,60% 90%,40% 52%,72% 50%);background:#14251C;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));transition:left .6s cubic-bezier(.4,0,.2,1),top .6s cubic-bezier(.4,0,.2,1),opacity .3s ease;opacity:0}
   .ripple{position:absolute;width:26px;height:26px;border-radius:50%;background:#2F6B4A;pointer-events:none;z-index:19;transform:translate(-50%,-50%);animation:mlripple .5s ease-out forwards;display:none}
+  .legal-links{display:flex;gap:10px 20px;align-items:center;justify-content:center;flex-wrap:wrap}
+  @media(max-width:700px){
+    .wrap{padding-left:18px;padding-right:18px}
+    header .wrap{padding-top:12px!important;padding-bottom:12px!important;gap:12px!important}
+    header nav{gap:8px!important;flex-wrap:nowrap!important}
+    header nav>a:not(.btn){display:none}
+    header .btn{padding:9px 15px!important;font-size:.82rem!important}
+    body>section:first-of-type{padding-top:42px!important;padding-bottom:12px!important}
+    body>section:first-of-type>div{grid-template-columns:minmax(0,1fr)!important;gap:36px!important}
+    body>section:first-of-type h1{font-size:clamp(2.25rem,11vw,3rem)!important}
+    #fonctionnement,#experience,#confidentialite,#telechargement{padding-top:48px!important;padding-bottom:48px!important}
+    #fonctionnement>div:last-child{grid-template-columns:1fr!important}
+    #experience>div:nth-child(2){margin-top:24px!important;border-radius:15px!important}
+    #experience button{width:100%;padding:15px 20px!important}
+    #confidentialite>div,#telechargement>div{border-radius:18px!important;padding:28px 20px!important}
+    #telechargement .btn{width:100%;padding:16px 18px!important}
+    footer .wrap{justify-content:center!important;text-align:center}
+  }
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ml-mock{animation:none}.cursor,.ripple{display:none!important}}
 </style>
 </head>
 <body>
@@ -189,17 +208,20 @@
 <section id="telechargement" class="wrap" style="padding-top:60px;padding-bottom:60px">
   <div style="background:linear-gradient(135deg,#1B4332,#2F6B4A);border-radius:28px;padding:clamp(34px,5.5vw,64px);text-align:center;box-shadow:0 30px 70px rgba(27,67,50,.3)">
     <div style="font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:#C7EBD6;margin-bottom:14px">Disponible dès maintenant</div>
-    <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.1rem,4.4vw,3.1rem);margin:0 0 16px;color:#F5F1E6">Téléchargez-moi.</h2>
+    <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.1rem,4.4vw,3.1rem);margin:0 0 16px;color:#F5F1E6">Télécharger Retrio gratuitement</h2>
     <p style="max-width:62ch;margin:0 auto 32px;line-height:1.6;font-size:1.05rem;color:#DCEAE0">Retrio retrouve vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire.</p>
-    <a class="btn" href="https://github.com/FloFish44/retrio/releases/download/v0.5.0-beta/Installateur_Retrio.exe" style="background:#F5F1E6;color:#14251C;padding:17px 30px;font-size:.98rem" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='#F5F1E6'">⬇ Télécharger Retrio 0.5 pour Windows</a>
-    <div style="margin-top:22px;font-size:.8rem;color:#9FC2AC;font-family:'IBM Plex Mono',monospace">Version bêta 0.5 · Recherche dans les PDF et les photos en local · Windows 10/11 · Connexion requise uniquement pour l'installation</div>
+    <div style="max-width:660px;margin:0 auto 25px;padding:17px 20px;border-radius:14px;background:rgba(245,241,230,.1);color:#EAF4ED;line-height:1.55;font-size:.92rem"><strong>Retrio analyse uniquement les dossiers que vous choisissez.</strong><br />Vos fichiers ne sont ni envoyés, ni copiés, ni modifiés.</div>
+    <a class="btn" href="https://github.com/FloFish44/retrio/releases/download/v0.5.0-beta/Installateur_Retrio.exe" style="background:#F5F1E6;color:#14251C;padding:17px 30px;font-size:.98rem" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='#F5F1E6'">⬇ Télécharger Retrio pour Windows</a>
+    <div style="margin-top:20px;color:#DCEAE0;font-size:.9rem;font-weight:600">Version bêta gratuite — vos retours nous aident à l'améliorer.</div>
+    <div style="max-width:680px;margin:9px auto 0;color:#BFD8C7;font-size:.82rem;line-height:1.55">Cette version est fonctionnelle, mais certaines recherches peuvent encore être améliorées.</div>
+    <div style="max-width:680px;margin:12px auto 0;color:#9FC2AC;font-size:.78rem;line-height:1.55">Internet sert uniquement à télécharger et installer Retrio. L'analyse et la recherche fonctionnent ensuite directement sur votre ordinateur. · Windows 10/11</div>
   </div>
 </section>
 
 <section class="wrap" style="padding-top:70px;padding-bottom:54px;text-align:center">
   <div style="color:#5B7364;font-weight:700;letter-spacing:.07em;font-size:.76rem;text-transform:uppercase">Moins de dossiers à fouiller. Plus de temps pour vous.</div>
   <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;font-size:clamp(2.1rem,4.8vw,3.2rem);margin:18px 0 26px;color:#14251C">« Ah, <span style="color:#2F6B4A">le voilà.</span> »</h2>
-  <a class="btn" href="#experience" style="border:1.5px solid #C9BE9F;color:#14251C;padding:16px 30px;font-size:.98rem" onmouseover="this.style.borderColor='#1B4332';this.style.color='#1B4332'" onmouseout="this.style.borderColor='#C9BE9F';this.style.color='#14251C'">Retrouvez cette sensation →</a>
+  <a class="btn" href="#experience" style="border:1.5px solid #C9BE9F;color:#14251C;padding:16px 30px;font-size:.98rem" onmouseover="this.style.borderColor='#1B4332';this.style.color='#1B4332'" onmouseout="this.style.borderColor='#C9BE9F';this.style.color='#14251C'">Voir comment Retrio retrouve un fichier →</a>
   <div style="margin-top:16px;color:#5B7364;font-size:.85rem">Disponible dès maintenant, pour Windows</div>
 </section>
 
@@ -226,7 +248,16 @@
 </section>
 
 <footer style="border-top:1px solid #DED4BC">
-  <div class="wrap" style="padding-top:26px;padding-bottom:26px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;color:#5B7364;font-size:.85rem">
+  <div class="wrap" style="padding-top:28px;padding-bottom:18px;color:#5B7364;font-size:.85rem;text-align:center">
+    <div class="legal-links">
+      <a href="./informations-legales.html#mentions">Mentions légales</a>
+      <a href="./informations-legales.html#confidentialite">Politique de confidentialité</a>
+      <a href="./informations-legales.html#conditions">Conditions d'utilisation</a>
+      <a href="./informations-legales.html#assistance">Contact et assistance</a>
+      <a href="./informations-legales.html#desinstallation">Comment désinstaller Retrio</a>
+    </div>
+  </div>
+  <div class="wrap" style="padding-top:14px;padding-bottom:26px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;color:#5B7364;font-size:.85rem;border-top:1px solid rgba(201,190,159,.55)">
     <div>Retrio — Simplicité. Rapidité. Confidentialité.</div>
     <div style="display:flex;gap:16px;align-items:center">
       <a href="#" aria-label="TikTok" style="color:#5B7364"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.82a4.28 4.28 0 0 1-3.14-1.4v9.8a4.9 4.9 0 1 1-4.2-4.85v2.06a2.86 2.86 0 1 0 2.06 2.75V2h2.08a4.28 4.28 0 0 0 3.2 4v-.02Z"/></svg></a>
