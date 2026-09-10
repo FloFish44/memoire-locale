@@ -48,12 +48,20 @@
   .demo-video{display:block;width:100%;aspect-ratio:16/9;background:#0E1B14;object-fit:contain}
   .demo-cta{border:0;background:linear-gradient(135deg,#D9C185,#F1D98F);color:#14251C;border-radius:999px;padding:14px 22px;font-weight:800;cursor:pointer;font-size:.92rem;box-shadow:0 12px 28px rgba(100,77,24,.24);transition:transform .2s,box-shadow .2s}
   .demo-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(100,77,24,.32)}
+  .site-guides{position:relative}
+  .site-guides summary{cursor:pointer;color:#3C4A40;font-size:.92rem;font-weight:600;list-style:none;white-space:nowrap}
+  .site-guides summary::-webkit-details-marker{display:none}
+  .site-guides-menu{display:none;position:absolute;right:0;top:30px;width:300px;background:#FBF8F0;border:1px solid #DED4BC;border-radius:14px;padding:10px;box-shadow:0 18px 42px rgba(20,37,28,.18);z-index:70}
+  .site-guides[open] .site-guides-menu{display:grid}
+  .site-guides-menu a{padding:9px 11px;border-radius:8px;color:#294235;font-size:.88rem}
+  .site-guides-menu a:hover{background:#ECE7D8}
   .video-close{border:0;background:transparent;color:#14251C;font-size:1.7rem;line-height:1;cursor:pointer;padding:5px 8px}
   @media(max-width:700px){
     .wrap{padding-left:18px;padding-right:18px}
     header .wrap{padding-top:12px!important;padding-bottom:12px!important;gap:12px!important}
     header nav{gap:8px!important;flex-wrap:nowrap!important}
     header nav>a:not(.btn){display:none}
+    .site-guides-menu{right:-80px;width:min(300px,calc(100vw - 28px))}
     header .btn{padding:9px 15px!important;font-size:.82rem!important}
     body>section:first-of-type{padding-top:42px!important;padding-bottom:12px!important}
     body>section:first-of-type>div{grid-template-columns:minmax(0,1fr)!important;gap:36px!important}
@@ -80,6 +88,18 @@
     </a>
     <nav style="display:flex;gap:28px;align-items:center;flex-wrap:wrap">
       <a href="#fonctionnement" style="color:#3C4A40;font-size:.92rem;font-weight:600">Comment ça marche ?</a>
+      <details class="site-guides">
+        <summary>Conseils pratiques ▾</summary>
+        <div class="site-guides-menu">
+          <a href="./guides.html"><strong>Tous les guides</strong></a>
+          <a href="./retrouver-fichier-perdu.html">Retrouver un fichier perdu</a>
+          <a href="./retrouver-dossier-perdu-windows.html">Retrouver un dossier perdu</a>
+          <a href="./retrouver-fichier-telecharge.html">Retrouver un téléchargement</a>
+          <a href="./retrouver-facture-ordinateur.html">Retrouver une facture</a>
+          <a href="./retrouver-photo-ordinateur.html">Retrouver une photo</a>
+          <a href="./rechercher-texte-dans-pdf.html">Rechercher dans des PDF</a>
+        </div>
+      </details>
       <a href="#confidentialite" style="color:#3C4A40;font-size:.92rem;font-weight:600">Confidentialité</a>
       <a class="btn" href="./telecharger.html" style="color:#F5F1E6;background:#1B4332;padding:10px 20px;font-size:.9rem" onmouseover="this.style.background='#2F6B4A'" onmouseout="this.style.background='#1B4332'">Télécharger</a>
     </nav>
@@ -126,6 +146,7 @@
     <a href="./retrouver-photo-ordinateur.html" style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:22px;color:#14251C"><strong>Retrouver une photo</strong><span style="display:block;color:#5B7364;margin-top:8px;font-size:.9rem;line-height:1.5">Utiliser un objet, une couleur et quelques mots simples.</span></a>
     <a href="./logiciel-recherche-fichiers-windows.html" style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:22px;color:#14251C"><strong>Recherche de fichiers Windows</strong><span style="display:block;color:#5B7364;margin-top:8px;font-size:.9rem;line-height:1.5">Comprendre ce que Retrio analyse et comment il recherche.</span></a>
   </div>
+  <p style="margin:26px 0 0"><a class="btn" href="./guides.html" style="color:#F5F1E6;background:#1B4332;padding:12px 20px">Voir tous les conseils pratiques</a></p>
 </section>
 
 <div id="video-demo" class="video-modal" role="dialog" aria-modal="true" aria-labelledby="video-title" onclick="if(event.target===this)closeVideoDemo()">
@@ -302,7 +323,7 @@
 <footer style="border-top:1px solid #DED4BC">
   <div class="wrap" style="padding-top:28px;padding-bottom:18px;color:#5B7364;font-size:.85rem;text-align:center">
     <div class="legal-links">
-      <a href="./retrouver-fichier-perdu.html">Guides pour retrouver un fichier</a>
+      <a href="./guides.html">Guides pour retrouver vos fichiers</a>
       <a href="./informations-legales.html#mentions">Mentions légales</a>
       <a href="./informations-legales.html#confidentialite">Politique de confidentialité</a>
       <a href="./informations-legales.html#conditions">Conditions d'utilisation</a>
