@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Retrio — Retrouvez vos fichiers</title>
  <link rel="icon" type="image/png" href="./favicon.png" />
-<meta name="description" content="Retrio : le logiciel Windows qui retrouve vos documents même quand leur nom ne veut rien dire. 100% local, rien n'est envoyé sur Internet." />
+<meta name="description" content="Retrio retrouve vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire. Vos fichiers restent sur votre ordinateur." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
@@ -36,7 +36,7 @@
       <span>Retrio</span>
     </a>
     <nav style="display:flex;gap:28px;align-items:center;flex-wrap:wrap">
-      <a href="#experience" style="color:#3C4A40;font-size:.92rem;font-weight:600">L'expérience</a>
+      <a href="#fonctionnement" style="color:#3C4A40;font-size:.92rem;font-weight:600">Comment ça marche ?</a>
       <a href="#confidentialite" style="color:#3C4A40;font-size:.92rem;font-weight:600">Confidentialité</a>
       <a class="btn" href="#telechargement" style="color:#F5F1E6;background:#1B4332;padding:10px 20px;font-size:.9rem" onmouseover="this.style.background='#2F6B4A'" onmouseout="this.style.background='#1B4332'">Télécharger</a>
     </nav>
@@ -46,13 +46,15 @@
 <section class="wrap" style="padding-top:74px;padding-bottom:30px">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:56px;align-items:center">
     <div style="min-width:0">
-      <h1 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.6rem,5.6vw,4.2rem);line-height:1.04;letter-spacing:-0.015em;margin:0 0 22px;color:#14251C">Vos fichiers.<br /><span style="color:#2F6B4A;font-style:italic">Enfin retrouvés.</span></h1>
-      <p style="color:#4C5A50;font-size:1.1rem;line-height:1.6;max-width:44ch;margin:0 0 30px">Décrivez ce que vous cherchez, Retrio retrouve le contenu — même derrière un nom illisible.</p>
-      <a class="btn" href="#telechargement" style="border:1.5px solid #C9BE9F;color:#14251C;padding:15px 24px;font-size:.98rem" onmouseover="this.style.borderColor='#1B4332';this.style.color='#1B4332'" onmouseout="this.style.borderColor='#C9BE9F';this.style.color='#14251C'">Télécharger</a>
+      <h1 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.35rem,4.8vw,3.6rem);line-height:1.04;letter-spacing:-0.015em;margin:0 0 22px;color:#14251C">Retrouvez n'importe quel document<br /><span style="color:#2F6B4A;font-style:italic">sur votre ordinateur.</span></h1>
+      <p style="color:#4C5A50;font-size:1.1rem;line-height:1.6;max-width:52ch;margin:0 0 12px">Même si vous avez oublié son nom. Écrivez simplement ce dont vous vous souvenez : Retrio lit le contenu de vos documents et retrouve le bon fichier en quelques secondes.</p>
+      <p style="color:#6B756E;font-size:.92rem;line-height:1.55;max-width:54ch;margin:0 0 26px">Par exemple : « ma facture EDF de février », « la photo du chien à la plage » ou « mon contrat d'assurance ».</p>
+      <a class="btn" href="#telechargement" style="border:1.5px solid #C9BE9F;color:#14251C;padding:15px 24px;font-size:.98rem" onmouseover="this.style.borderColor='#1B4332';this.style.color='#1B4332'" onmouseout="this.style.borderColor='#C9BE9F';this.style.color='#14251C'">Télécharger Retrio gratuitement</a>
+      <div style="margin-top:12px;color:#6B756E;font-size:.8rem">Pour Windows 10/11 · Sans compte · Vos fichiers restent sur votre ordinateur</div>
       <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:40px">
-        <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">100%</div><div style="color:#5B7364;font-size:.82rem">local, sans cloud</div></div>
+        <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">Privé</div><div style="color:#5B7364;font-size:.82rem">rien n'est envoyé sur Internet</div></div>
         <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">Gratuit</div><div style="color:#5B7364;font-size:.82rem">sans condition</div></div>
-        <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">3 clics</div><div style="color:#5B7364;font-size:.82rem">pour retrouver un fichier</div></div>
+        <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">Quelques mots</div><div style="color:#5B7364;font-size:.82rem">suffisent pour chercher</div></div>
       </div>
     </div>
     <div style="min-width:0">
@@ -67,13 +69,27 @@
   </div>
 </section>
 
+<section id="fonctionnement" class="wrap" style="padding-top:72px;padding-bottom:34px">
+  <div style="max-width:760px;margin-bottom:30px">
+    <div style="color:#2F6B4A;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px">Simple dès la première utilisation</div>
+    <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#14251C">Comment ça marche ?</h2>
+    <p style="color:#4C5A50;line-height:1.65;font-size:1.02rem;margin:0">Fini les heures passées à ouvrir des dossiers et des fichiers un par un.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px">
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:24px"><div style="width:38px;height:38px;border-radius:50%;background:#1B4332;color:#F5F1E6;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">1</div><h3 style="margin:0 0 9px;color:#14251C">Choisissez où chercher</h3><p style="margin:0;color:#4C5A50;line-height:1.6;font-size:.9rem">Sélectionnez simplement vos dossiers : Documents, Bureau, Images ou un disque.</p></div>
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:24px"><div style="width:38px;height:38px;border-radius:50%;background:#2F6B4A;color:#F5F1E6;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">2</div><h3 style="margin:0 0 9px;color:#14251C">Lancez l'analyse</h3><p style="margin:0;color:#4C5A50;line-height:1.6;font-size:.9rem">Retrio lit vos documents et reconnaît vos photos pour comprendre ce qu'ils contiennent.</p></div>
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:24px"><div style="width:38px;height:38px;border-radius:50%;background:#D9C185;color:#14251C;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">3</div><h3 style="margin:0 0 9px;color:#14251C">Décrivez votre fichier</h3><p style="margin:0;color:#4C5A50;line-height:1.6;font-size:.9rem">Tapez ce dont vous vous souvenez avec vos propres mots, sans connaître le nom exact.</p></div>
+    <div style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:24px"><div style="width:38px;height:38px;border-radius:50%;background:#C9A187;color:#14251C;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">4</div><h3 style="margin:0 0 9px;color:#14251C">Ouvrez le bon résultat</h3><p style="margin:0;color:#4C5A50;line-height:1.6;font-size:.9rem">Retrio classe les fichiers les plus pertinents et vous montre immédiatement le meilleur.</p></div>
+  </div>
+</section>
+
 <section id="experience" class="wrap" style="padding-top:80px;padding-bottom:80px">
   <div style="position:relative">
     <div aria-hidden="true" style="position:absolute;top:-46px;left:-6px;font-family:'Fraunces',serif;font-weight:700;font-size:7.5rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px #DED4BC">01</div>
     <div style="position:relative;z-index:1">
       <div style="color:#2F6B4A;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px">L'expérience</div>
-      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#14251C">Le nom vous échappe. <span style="color:#2F6B4A;font-style:italic">Pas le document.</span></h2>
-      <p style="color:#4C5A50;max-width:60ch;line-height:1.6;font-size:1.02rem;margin:0">Regardez Retrio à l'œuvre : la démonstration tourne seule, en boucle. Elle n'analyse aucun de vos fichiers — tout se passe dans votre navigateur.</p>
+      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#14251C">Le fichier s'appelle peut-être <span style="color:#2F6B4A;font-style:italic">SCAN_2840318_001.pdf.</span></h2>
+      <p style="color:#4C5A50;max-width:66ch;line-height:1.6;font-size:1.02rem;margin:0">Vous cherchez une facture, mais son nom est incompréhensible ? Écrivez « facture EDF de mars ». Retrio reconnaît les informations dans le PDF et retrouve le bon document. Regardez la démonstration ci-dessous.</p>
     </div>
   </div>
 
@@ -147,8 +163,8 @@
     <div aria-hidden="true" style="position:absolute;top:-40px;right:8px;font-family:'Fraunces',serif;font-weight:700;font-size:8rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(245,241,230,.14)">02</div>
     <div style="position:relative">
       <div style="color:#95D5B2;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px">Une confiance simple</div>
-      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#F5F1E6">Votre vie privée <span style="color:#95D5B2;font-style:italic">n'a pas à voyager.</span></h2>
-      <p style="color:#C7D9CC;max-width:60ch;line-height:1.6;font-size:1.02rem;margin:0 0 38px">Le logiciel est conçu pour fonctionner entièrement sur votre ordinateur. Vos documents vous appartiennent, leur contenu aussi.</p>
+      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#F5F1E6">Vos documents restent <span style="color:#95D5B2;font-style:italic">privés.</span></h2>
+      <p style="color:#C7D9CC;max-width:66ch;line-height:1.6;font-size:1.02rem;margin:0 0 38px">Retrio fonctionne directement sur votre ordinateur. Vos fichiers, vos photos et vos recherches ne sont jamais envoyés sur Internet.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
         <div style="background:rgba(245,241,230,.07);border-radius:16px;padding:24px">
           <div style="width:38px;height:38px;border-radius:10px;background:#95D5B2;color:#0E1B14;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:16px">1</div>
@@ -174,7 +190,7 @@
   <div style="background:linear-gradient(135deg,#1B4332,#2F6B4A);border-radius:28px;padding:clamp(34px,5.5vw,64px);text-align:center;box-shadow:0 30px 70px rgba(27,67,50,.3)">
     <div style="font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:#C7EBD6;margin-bottom:14px">Disponible dès maintenant</div>
     <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.1rem,4.4vw,3.1rem);margin:0 0 16px;color:#F5F1E6">Téléchargez-moi.</h2>
-    <p style="max-width:58ch;margin:0 auto 32px;line-height:1.6;font-size:1.05rem;color:#DCEAE0">Retrio pour Windows : sélectionnez vos dossiers, lancez l'analyse, retrouvez vos fichiers. 100% local, gratuit.</p>
+    <p style="max-width:62ch;margin:0 auto 32px;line-height:1.6;font-size:1.05rem;color:#DCEAE0">Retrio retrouve vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire.</p>
     <a class="btn" href="https://github.com/FloFish44/retrio/releases/download/v0.5.0-beta/Installateur_Retrio.exe" style="background:#F5F1E6;color:#14251C;padding:17px 30px;font-size:.98rem" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='#F5F1E6'">⬇ Télécharger Retrio 0.5 pour Windows</a>
     <div style="margin-top:22px;font-size:.8rem;color:#9FC2AC;font-family:'IBM Plex Mono',monospace">Version bêta 0.5 · Recherche dans les PDF et les photos en local · Windows 10/11 · Connexion requise uniquement pour l'installation</div>
   </div>
