@@ -81,8 +81,8 @@
         <div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;color:#1B4332">Quelques mots</div><div style="color:#5B7364;font-size:.82rem">suffisent pour chercher</div></div>
       </div>
     </div>
-    <div style="min-width:0">
-      <div class="demo-launch" style="display:flex;justify-content:flex-end;margin:0 4px 24px 0">
+    <div style="min-width:0;position:relative">
+      <div class="demo-launch" style="position:absolute;right:4px;top:-82px;z-index:2">
         <button type="button" onclick="openVideoDemo()" style="border:1.5px solid #C9BE9F;background:#FBF8F0;color:#14251C;border-radius:999px;padding:12px 19px;font-weight:700;cursor:pointer;font-size:.9rem">▶ Voir la démo en 20 secondes</button>
       </div>
       <div class="ml-mock" style="background:#14251C;border-radius:16px;box-shadow:0 30px 60px rgba(20,37,28,.35);overflow:hidden">
@@ -289,7 +289,7 @@
 <script>
 function openVideoDemo(){document.getElementById('video-demo').classList.add('open');document.body.style.overflow='hidden';document.querySelector('#video-demo .video-close').focus()}
 function closeVideoDemo(){document.getElementById('video-demo').classList.remove('open');document.body.style.overflow=''}
-document.addEventListener('keydown',function(event){if(event.key==='Escape')closeVideoDemo()})
+document.addEventListener('keydown',function(event){if(event.key==='Escape')closeVideoDemo()});
 (function(){
   var heroPairs = [
     { from: 'SCAN_20240318_001.pdf', to: 'La facture du lave-linge' },
