@@ -3,5 +3,8 @@ __pycache__/
 .venv/
 build/
 dist/
+build-new/
+dist-new/
+.pyinstaller-cache/
 *.spec
 *.sqlite3*
