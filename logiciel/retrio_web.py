@@ -173,10 +173,14 @@ EXT_ARCHIVES = {".zip", ".rar", ".7z", ".tar", ".gz"}
 # Extensions pour lesquelles on tente une extraction du contenu texte
 # (utilisées pour indexer et retrouver un fichier par ce qu'il contient,
 # pas seulement par son nom). Tout est fait avec la bibliothèque standard.
-EXT_TEXT_READABLE = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".html", ".htm", ".ini", ".rtf"}
+EXT_TEXT_READABLE = {".txt", ".md", ".csv", ".log", ".json", ".xml", ".html", ".htm", ".rtf"}
 EXT_DOCX = {".docx"}
 EXT_XLSX = {".xlsx"}
 EXT_PPTX = {".pptx"}
+
+# Fichiers techniques sans intérêt pour la recherche personnelle.
+# Ils ne sont ni comptés ni ajoutés à l'index.
+IGNORED_EXTENSIONS = {".ini"}
 
 # Taille max lue par fichier pour l'extraction de contenu (évite de passer
 # un temps disproportionné sur d'énormes fichiers texte/logs).
@@ -437,6 +441,8 @@ def scan_folders(roots: list, progress_cb=None, stop_flag=None, cache_dir=None) 
                 for filename in filenames:
                     if stop_flag.is_set(): break
                     if filename.lower().startswith(SKIP_FILE_PREFIXES):
+                        continue
+                    if os.path.splitext(filename)[1].lower() in IGNORED_EXTENSIONS:
                         continue
                     full_path = os.path.abspath(os.path.join(dirpath,filename))
                     key = os.path.normcase(full_path)

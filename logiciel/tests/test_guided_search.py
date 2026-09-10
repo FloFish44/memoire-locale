@@ -13,6 +13,8 @@ class GuidedSearchTests(unittest.TestCase):
             for name in ['Codex','Claude','ChatGPT','OpenAI','Anthropic','Documents']:
                 (root/name).mkdir();(root/name/'facture.txt').write_text('facture EDF')
             (root/'Documents'/'codex-clipboard-private.png').write_bytes(b'technical')
+            (root/'Documents'/'desktop.ini').write_text('[ShellClassInfo]')
+            (root/'Documents'/'application.ini').write_text('[settings]')
             result=scan_folders([tmp])
             self.assertEqual(result.total_files,1)
             self.assertIn('Documents',result.entries[0].path)
