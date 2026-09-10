@@ -266,6 +266,9 @@ async function runSearch(query) {
   if (query !== state.lastQuery && /\b(photos?|images?)\b/i.test(query || '')) {
     state.typeFilter='image';
     document.querySelectorAll('.chip-filter').forEach(c => c.classList.toggle('active', c.dataset.key === 'image'));
+  } else if (query !== state.lastQuery && /\bpdfs?\b/i.test(query || '')) {
+    state.typeFilter='pdf';
+    document.querySelectorAll('.chip-filter').forEach(c => c.classList.toggle('active', c.dataset.key === 'pdf'));
   }
   state.lastQuery = query || "";
   if (!state.hasScanned) {

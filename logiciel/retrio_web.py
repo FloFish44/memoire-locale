@@ -40,7 +40,7 @@ from image_content import ImageReader
 from retrieval import search as search_by_content, evidence
 
 APP_NAME = "Retrio"
-APP_VERSION = "0.5.0 (bêta)"
+APP_VERSION = "0.5.1 (bêta)"
 
 # ---------------------------------------------------------------------------
 # Icône de l'application (PNG encodé en base64, intégré directement au
@@ -188,8 +188,14 @@ MAX_CONTENT_KEEP_CHARS = 20_000
 SKIP_DIR_NAMES = {
     "$recycle.bin", "system volume information", "windows", "programdata",
     "program files", "program files (x86)", "node_modules", ".git", ".cache",
-    "appdata", "codex", "claude", ".codex", ".claude", "__pycache__", ".venv",
+    "appdata", "codex", "claude", "chatgpt", "openai", "anthropic",
+    ".codex", ".claude", ".openai", "__pycache__", ".venv",
 }
+
+SKIP_FILE_PREFIXES = (
+    "codex-clipboard-", "codex-session-", "claude-session-",
+    "chatgpt-session-", "chatgpt-export-",
+)
 
 # Motifs de noms de fichiers "peu parlants" (scan, capture, sans titre...)
 BADLY_NAMED_PATTERNS = [
@@ -430,6 +436,8 @@ def scan_folders(roots: list, progress_cb=None, stop_flag=None, cache_dir=None) 
                 dirnames[:] = [d for d in dirnames if d.lower() not in SKIP_DIR_NAMES and not d.startswith('.') and not os.path.islink(os.path.join(dirpath,d)) and not getattr(os.path,"isjunction",lambda _:False)(os.path.join(dirpath,d))]
                 for filename in filenames:
                     if stop_flag.is_set(): break
+                    if filename.lower().startswith(SKIP_FILE_PREFIXES):
+                        continue
                     full_path = os.path.abspath(os.path.join(dirpath,filename))
                     key = os.path.normcase(full_path)
                     if key in seen: continue
@@ -704,6 +712,8 @@ class Api:
         query = query or ""
         if self.type_filter == 'image':
             query = re.sub(r'\b(photos?|images?)\b', '', query, flags=re.I).strip()
+        elif self.type_filter == 'pdf':
+            query = re.sub(r'\bpdfs?\b', '', query, flags=re.I).strip()
         if query.strip():
             all_matches = search_entries(pool, query, limit=None)
             matches = all_matches[:60]

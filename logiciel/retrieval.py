@@ -58,6 +58,15 @@ def relevance(entry,groups):
             for candidate in name|content) for word in group)
         if fuzzy: score+=4
         else: return 0
+    # Favor documents where every requested concept appears together on the
+    # same page. This makes the actual invoice outrank loose coincidences.
+    pages=getattr(entry,'pages',[]) or []
+    if pages:
+        for page in pages:
+            words=set(tokenize(page.get('text','')))
+            if all(group & words for group in groups):
+                score += 10
+                break
     return score
 
 def search(entries,query,limit=60):
