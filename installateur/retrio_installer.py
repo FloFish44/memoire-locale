@@ -49,6 +49,7 @@ class Api:
         self.window = None
         self.running = False
         self.target = None
+        self._maximized = False
 
     def js(self, function, *values):
         if self.window:
@@ -146,6 +147,16 @@ class Api:
     def close(self):
         self.window.destroy()
 
+    def minimize(self):
+        self.window.minimize()
+
+    def toggle_maximize(self):
+        if self._maximized:
+            self.window.restore()
+        else:
+            self.window.maximize()
+        self._maximized = not self._maximized
+
 
 def main():
     import webview
@@ -154,7 +165,8 @@ def main():
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Retrio.Installer")
     api = Api()
     api.window = webview.create_window("Installation de Retrio", url=str(resource_path("installer.html")),
-                                       js_api=api, width=560, height=570, resizable=False,
+                                       js_api=api, frameless=True, easy_drag=False,
+                                       width=620, height=680, min_size=(580, 640), resizable=True,
                                        background_color="#FBF8F0")
     webview.start(icon=str(resource_path("retrio_icon.ico")))
 
