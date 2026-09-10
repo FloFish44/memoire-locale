@@ -816,13 +816,27 @@ def main():
     )
     api.window = window
     if icon_path:
-        webview.start(icon=icon_path)
+        webview.start(gui="edgechromium", icon=icon_path)
     else:
-        webview.start()
+        webview.start(gui="edgechromium")
+
+
+def warmup():
+    """Charge silencieusement les composants du démarrage pendant l'installation."""
+    get_known_folders()
+    import webview  # noqa: F401
+    if sys.platform == "win32":
+        try:
+            import webview.platforms.edgechromium  # noqa: F401
+        except Exception:
+            pass
+    return 0
 
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
+    if len(sys.argv) == 2 and sys.argv[1] == "--warmup":
+        sys.exit(warmup())
     if len(sys.argv) == 3 and sys.argv[1] == "--self-test":
         from smoke_check import run
         sys.exit(run(sys.argv[2]))

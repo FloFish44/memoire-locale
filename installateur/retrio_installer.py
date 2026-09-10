@@ -13,7 +13,7 @@ import traceback
 APP_NAME = "Retrio"
 EXE_NAME = "RetrioWeb.exe"
 DOWNLOAD_URL = "https://github.com/FloFish44/retrio/releases/download/v0.5.0-beta/RetrioWeb.zip"
-DOWNLOAD_SHA256 = "E0FE5E0790B62D92009DFF4B0AFBF4DE1396133939C2F285C300EEE2899CE345"
+DOWNLOAD_SHA256 = "422465CD12F632E66CF1905BC677BE6EB14214A13320EFF91D810F4796A2B2A5"
 INSTALL_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Programs" / "Retrio"
 
 
@@ -122,6 +122,23 @@ class Api:
                 current.replace(previous)
             staging.replace(current)
             self.target = current / relative_exe
+
+            # Le premier chargement de Python, WebView2 et des bibliothèques
+            # peut être contrôlé par Windows Defender. On le fait ici, sans
+            # fenêtre, pour que le premier vrai lancement soit immédiat.
+            self.js("updateProgress", 92, "Préparation du premier démarrage…")
+            try:
+                subprocess.run(
+                    [str(self.target), "--warmup"],
+                    cwd=str(self.target.parent),
+                    timeout=120,
+                    check=True,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+            except Exception:
+                # Une préparation refusée par un antivirus ne rend pas
+                # l'installation inutilisable : Retrio chargera normalement.
+                pass
 
             icon = INSTALL_DIR / "retrio_icon.ico"
             shutil.copy2(resource_path("retrio_icon.ico"), icon)

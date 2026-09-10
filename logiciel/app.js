@@ -243,6 +243,9 @@ function setFilterLabel(key, label) {
 function bindSearch() {
   const input = document.getElementById("searchInput");
   document.getElementById("searchBtn").addEventListener("click", () => runSearch(input.value));
+  input.addEventListener("input", () => {
+    if (!input.value.trim()) resetSearchView();
+  });
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") runSearch(input.value);
   });
@@ -252,6 +255,21 @@ function bindSearch() {
       runSearch(chip.dataset.q);
     });
   });
+}
+
+// Empêche WebView de traiter Retour arrière comme une navigation lorsque le
+// focus vient juste de quitter le champ de recherche.
+window.addEventListener("keydown", (event) => {
+  const editable = event.target instanceof HTMLInputElement ||
+    event.target instanceof HTMLTextAreaElement || event.target?.isContentEditable;
+  if (event.key === "Backspace" && !editable) event.preventDefault();
+});
+
+function resetSearchView() {
+  state.lastQuery = "";
+  state.requestId = (state.requestId || 0) + 1;
+  document.getElementById("resultsCount").textContent = "";
+  renderResults([], "");
 }
 
 function bindFilters() {
@@ -266,6 +284,11 @@ function bindFilters() {
 }
 
 async function runSearch(query) {
+  query = (query || "").trim();
+  if (!query) {
+    resetSearchView();
+    return;
+  }
   if (query !== state.lastQuery && /\b(photos?|images?)\b/i.test(query || '')) {
     state.typeFilter='image';
     document.querySelectorAll('.chip-filter').forEach(c => c.classList.toggle('active', c.dataset.key === 'image'));
@@ -273,7 +296,7 @@ async function runSearch(query) {
     state.typeFilter='pdf';
     document.querySelectorAll('.chip-filter').forEach(c => c.classList.toggle('active', c.dataset.key === 'pdf'));
   }
-  state.lastQuery = query || "";
+  state.lastQuery = query;
   if (!state.hasScanned) {
     document.getElementById("resultsCount").textContent = "Lancez d'abord une analyse pour pouvoir rechercher.";
     renderResults([], query);
