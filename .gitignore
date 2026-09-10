@@ -8,6 +8,9 @@ dist-new/
 build-next/
 dist-next/
 release-next/
+build-*/
+dist-*/
+release-*/
 .pyinstaller-cache*/
 RetrioWeb-*.zip
 *.spec

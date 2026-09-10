@@ -12,6 +12,12 @@ CONCEPTS = [
     {'electricite','electrique','electric','electricity'},
     {'lavelinge','machinealaver','laveuse'},
     {'photo','photos','image','images'},
+    {'adhesif','adhesive','ruban','tape','scotch','mask','masking'},
+    {'vert','verte','verts','vertes','green'},
+    {'rouge','rouges','red'}, {'bleu','bleue','bleus','bleues','blue'},
+    {'jaune','jaunes','yellow'}, {'noir','noire','noirs','noires','black'},
+    {'blanc','blanche','blancs','blanches','white'},
+    {'rond','ronde','cercle','circulaire','anneau','rouleau','round','circle','roll'},
     {'impot','impots','fiscal','fiscale','taxe'},
     {'habitation','logement','domicile'},
 ]

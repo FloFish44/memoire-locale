@@ -50,6 +50,14 @@ class GuidedSearchTests(unittest.TestCase):
             self.assertEqual(len(payload['matches']),1)
             self.assertIn('Photos',payload['matches'][0]['path'])
 
+    def test_image_object_and_colour_synonyms(self):
+        from retrieval import search
+        wanted=FileEntry(path='928381.png',name='928381.png',stem='928381',ext='.png',size=10,
+                         category='images',content='GREEN MASK format carré',badly_named=True)
+        other=FileEntry(path='vacances.jpg',name='vacances.jpg',stem='vacances',ext='.jpg',size=10,
+                        category='images',content='bleu blue plage mer',badly_named=False)
+        self.assertEqual(search([other,wanted],'adhésif vert')[0].name,'928381.png')
+
     @unittest.skipUnless(sys.platform=='win32','Windows only')
     def test_desktop_offered(self):
         self.assertIn('Bureau',get_known_folders())
