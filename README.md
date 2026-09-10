@@ -1,5 +1,5 @@
 # Retrio
-Assistant Windows de recherche documentaire intelligent, simple et entièrement local. Site et logiciel.
+Assistant Windows de recherche documentaire intelligent, simple et entièrement local. Site officiel : [retrio.eu](https://retrio.eu/).
 
 ## Version 0.5.0 : parcours guidé et photos
 
