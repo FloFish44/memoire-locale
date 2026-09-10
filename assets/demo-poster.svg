@@ -3,6 +3,6 @@
   <rect width="1600" height="900" fill="url(#g)"/>
   <circle cx="800" cy="410" r="92" fill="#d9c185"/>
   <path d="M775 355v110l88-55z" fill="#14251c"/>
-  <text x="800" y="590" text-anchor="middle" fill="#f5f1e6" font-family="Arial, sans-serif" font-size="52" font-weight="700">Retrio en 20 secondes</text>
+  <text x="800" y="590" text-anchor="middle" fill="#f5f1e6" font-family="Arial, sans-serif" font-size="52" font-weight="700">Découvrez Retrio en action</text>
   <text x="800" y="655" text-anchor="middle" fill="#c7d9cc" font-family="Arial, sans-serif" font-size="28">Voyez comment retrouver un fichier avec quelques mots</text>
 </svg>
