@@ -6,6 +6,10 @@
 <title>Retrio — Retrouvez vos fichiers</title>
  <link rel="icon" type="image/png" href="./favicon.png" />
 <meta name="description" content="Retrio retrouve vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire. Vos fichiers restent sur votre ordinateur." />
+<link rel="canonical" href="https://retrio.eu/" />
+<meta property="og:url" content="https://retrio.eu/" />
+<meta property="og:title" content="Retrio — Retrouvez vos fichiers" />
+<meta property="og:description" content="Retrouvez vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
@@ -28,8 +32,10 @@
   .legal-links{display:flex;gap:10px 20px;align-items:center;justify-content:center;flex-wrap:wrap}
   .video-modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(14,27,20,.72);padding:22px;align-items:center;justify-content:center}
   .video-modal.open{display:flex}
-  .video-dialog{width:min(720px,100%);background:#FBF8F0;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden}
-  .video-placeholder{aspect-ratio:16/9;background:linear-gradient(145deg,#14251C,#285B43);display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;color:#F5F1E6}
+  .video-dialog{width:min(960px,100%);background:#FBF8F0;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden}
+  .demo-video{display:block;width:100%;aspect-ratio:16/9;background:#0E1B14;object-fit:contain}
+  .demo-cta{border:0;background:linear-gradient(135deg,#D9C185,#F1D98F);color:#14251C;border-radius:999px;padding:14px 22px;font-weight:800;cursor:pointer;font-size:.92rem;box-shadow:0 12px 28px rgba(100,77,24,.24);transition:transform .2s,box-shadow .2s}
+  .demo-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(100,77,24,.32)}
   .video-close{border:0;background:transparent;color:#14251C;font-size:1.7rem;line-height:1;cursor:pointer;padding:5px 8px}
   @media(max-width:700px){
     .wrap{padding-left:18px;padding-right:18px}
@@ -47,7 +53,7 @@
     #confidentialite>div,#telechargement>div{border-radius:18px!important;padding:28px 20px!important}
     #telechargement .btn{width:100%;padding:16px 18px!important}
     footer .wrap{justify-content:center!important;text-align:center}
-    .demo-launch{display:none!important}
+    .demo-launch{position:static!important;margin-bottom:18px;text-align:center}.demo-cta{width:100%}
   }
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ml-mock{animation:none}.cursor,.ripple{display:none!important}}
 </style>
@@ -83,7 +89,7 @@
     </div>
     <div style="min-width:0;position:relative">
       <div class="demo-launch" style="position:absolute;right:4px;top:-82px;z-index:2">
-        <button type="button" onclick="openVideoDemo()" style="border:1.5px solid #C9BE9F;background:#FBF8F0;color:#14251C;border-radius:999px;padding:12px 19px;font-weight:700;cursor:pointer;font-size:.9rem">▶ Voir la démo en 20 secondes</button>
+        <button type="button" class="demo-cta" onclick="openVideoDemo()">▶ Voyez Retrio retrouver un fichier en 20 secondes</button>
       </div>
       <div class="ml-mock" style="background:#14251C;border-radius:16px;box-shadow:0 30px 60px rgba(20,37,28,.35);overflow:hidden">
         <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#0E1B14">
@@ -102,7 +108,10 @@
       <strong id="video-title" style="font-family:'Fraunces',Georgia,serif;font-size:1.2rem;color:#14251C">Découvrez Retrio en 20 secondes</strong>
       <button type="button" class="video-close" aria-label="Fermer la démonstration" onclick="closeVideoDemo()">×</button>
     </div>
-    <div class="video-placeholder"><div><div style="font-size:2.6rem;margin-bottom:12px">▶</div><strong style="font-size:1.25rem">La vidéo de démonstration arrive prochainement.</strong><div style="margin-top:9px;color:#C7D9CC;font-size:.92rem">Vous verrez comment retrouver un document avec quelques mots.</div></div></div>
+    <video id="retrio-demo-video" class="demo-video" controls preload="metadata" playsinline poster="./assets/demo-poster.svg">
+      <source src="./assets/demo-retrio.mp4" type="video/mp4" />
+      Votre navigateur ne peut pas lire cette vidéo. <a href="./assets/demo-retrio.mp4">Télécharger la démonstration</a>.
+    </video>
   </div>
 </div>
 
@@ -229,7 +238,7 @@
     <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(2.1rem,4.4vw,3.1rem);margin:0 0 16px;color:#F5F1E6">Télécharger Retrio gratuitement</h2>
     <p style="max-width:62ch;margin:0 auto 32px;line-height:1.6;font-size:1.05rem;color:#DCEAE0">Retrio retrouve vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire.</p>
     <div style="max-width:660px;margin:0 auto 25px;padding:17px 20px;border-radius:14px;background:rgba(245,241,230,.1);color:#EAF4ED;line-height:1.55;font-size:.92rem"><strong>Retrio analyse uniquement les dossiers que vous choisissez.</strong><br />Vos fichiers ne sont ni envoyés, ni copiés, ni modifiés.</div>
-    <a class="btn" href="https://github.com/FloFish44/retrio/releases/download/v0.5.0-beta/Installateur_Retrio.exe" style="background:#F5F1E6;color:#14251C;padding:17px 30px;font-size:.98rem" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='#F5F1E6'">⬇ Télécharger Retrio pour Windows</a>
+    <a class="btn" href="./telecharger.html" style="background:#F5F1E6;color:#14251C;padding:17px 30px;font-size:.98rem" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='#F5F1E6'">⬇ Télécharger Retrio pour Windows</a>
     <div style="margin-top:20px;color:#DCEAE0;font-size:.9rem;font-weight:600">Version bêta gratuite — vos retours nous aident à l'améliorer.</div>
     <div style="max-width:680px;margin:9px auto 0;color:#BFD8C7;font-size:.82rem;line-height:1.55">Cette version est fonctionnelle, mais certaines recherches peuvent encore être améliorées.</div>
     <div style="max-width:680px;margin:12px auto 0;color:#9FC2AC;font-size:.78rem;line-height:1.55">Internet sert uniquement à télécharger et installer Retrio. L'analyse et la recherche fonctionnent ensuite directement sur votre ordinateur. · Windows 10/11</div>
@@ -287,8 +296,8 @@
 </footer>
 
 <script>
-function openVideoDemo(){document.getElementById('video-demo').classList.add('open');document.body.style.overflow='hidden';document.querySelector('#video-demo .video-close').focus()}
-function closeVideoDemo(){document.getElementById('video-demo').classList.remove('open');document.body.style.overflow=''}
+function openVideoDemo(){var modal=document.getElementById('video-demo'),video=document.getElementById('retrio-demo-video');modal.classList.add('open');document.body.style.overflow='hidden';video.currentTime=0;var playback=video.play();if(playback)playback.catch(function(){})}
+function closeVideoDemo(){var video=document.getElementById('retrio-demo-video');document.getElementById('video-demo').classList.remove('open');document.body.style.overflow='';video.pause()}
 document.addEventListener('keydown',function(event){if(event.key==='Escape')closeVideoDemo()});
 (function(){
   var heroPairs = [
