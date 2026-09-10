@@ -21,7 +21,10 @@ whenReady(init);
 
 async function init() {
   bindNav();
-  document.getElementById('demoBtn').onclick = () => document.getElementById('demoDialog').showModal();
+  const demoDialog = document.getElementById('demoDialog');
+  const demoVideo = document.getElementById('demoVideo');
+  document.getElementById('demoBtn').onclick = () => { demoDialog.showModal(); demoVideo.currentTime = 0; demoVideo.play().catch(() => {}); };
+  demoDialog.addEventListener('close', () => demoVideo.pause());
   document.getElementById('minBtn').onclick = () => api().minimize();
   document.getElementById('maxBtn').onclick = () => api().toggle_maximize();
   document.getElementById('closeBtn').onclick = () => api().close_window();
@@ -266,6 +269,9 @@ async function runSearch(query) {
   if (query !== state.lastQuery && /\b(photos?|images?)\b/i.test(query || '')) {
     state.typeFilter='image';
     document.querySelectorAll('.chip-filter').forEach(c => c.classList.toggle('active', c.dataset.key === 'image'));
+  } else if (query !== state.lastQuery && /\bpdfs?\b/i.test(query || '')) {
+    state.typeFilter='pdf';
+    document.querySelectorAll('.chip-filter').forEach(c => c.classList.toggle('active', c.dataset.key === 'pdf'));
   }
   state.lastQuery = query || "";
   if (!state.hasScanned) {

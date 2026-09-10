@@ -5,6 +5,10 @@ build/
 dist/
 build-new/
 dist-new/
-.pyinstaller-cache/
+build-next/
+dist-next/
+release-next/
+.pyinstaller-cache*/
+RetrioWeb-*.zip
 *.spec
 *.sqlite3*
