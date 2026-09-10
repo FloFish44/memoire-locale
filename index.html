@@ -26,6 +26,11 @@
   .cursor{position:absolute;width:20px;height:22px;transform:translate(-15%,-8%);pointer-events:none;z-index:30;clip-path:polygon(0 0,0 70%,26% 56%,44% 100%,60% 90%,40% 52%,72% 50%);background:#14251C;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));transition:left .6s cubic-bezier(.4,0,.2,1),top .6s cubic-bezier(.4,0,.2,1),opacity .3s ease;opacity:0}
   .ripple{position:absolute;width:26px;height:26px;border-radius:50%;background:#2F6B4A;pointer-events:none;z-index:19;transform:translate(-50%,-50%);animation:mlripple .5s ease-out forwards;display:none}
   .legal-links{display:flex;gap:10px 20px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .video-modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(14,27,20,.72);padding:22px;align-items:center;justify-content:center}
+  .video-modal.open{display:flex}
+  .video-dialog{width:min(720px,100%);background:#FBF8F0;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden}
+  .video-placeholder{aspect-ratio:16/9;background:linear-gradient(145deg,#14251C,#285B43);display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;color:#F5F1E6}
+  .video-close{border:0;background:transparent;color:#14251C;font-size:1.7rem;line-height:1;cursor:pointer;padding:5px 8px}
   @media(max-width:700px){
     .wrap{padding-left:18px;padding-right:18px}
     header .wrap{padding-top:12px!important;padding-bottom:12px!important;gap:12px!important}
@@ -42,6 +47,7 @@
     #confidentialite>div,#telechargement>div{border-radius:18px!important;padding:28px 20px!important}
     #telechargement .btn{width:100%;padding:16px 18px!important}
     footer .wrap{justify-content:center!important;text-align:center}
+    .demo-launch{display:none!important}
   }
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ml-mock{animation:none}.cursor,.ripple{display:none!important}}
 </style>
@@ -76,6 +82,9 @@
       </div>
     </div>
     <div style="min-width:0">
+      <div class="demo-launch" style="display:flex;justify-content:flex-end;margin:0 4px 24px 0">
+        <button type="button" onclick="openVideoDemo()" style="border:1.5px solid #C9BE9F;background:#FBF8F0;color:#14251C;border-radius:999px;padding:12px 19px;font-weight:700;cursor:pointer;font-size:.9rem">▶ Voir la démo en 20 secondes</button>
+      </div>
       <div class="ml-mock" style="background:#14251C;border-radius:16px;box-shadow:0 30px 60px rgba(20,37,28,.35);overflow:hidden">
         <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#0E1B14">
           <span style="width:9px;height:9px;border-radius:50%;background:#4A6156"></span><span style="width:9px;height:9px;border-radius:50%;background:#4A6156"></span><span style="width:9px;height:9px;border-radius:50%;background:#4A6156"></span>
@@ -86,6 +95,16 @@
     </div>
   </div>
 </section>
+
+<div id="video-demo" class="video-modal" role="dialog" aria-modal="true" aria-labelledby="video-title" onclick="if(event.target===this)closeVideoDemo()">
+  <div class="video-dialog">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid #DED4BC">
+      <strong id="video-title" style="font-family:'Fraunces',Georgia,serif;font-size:1.2rem;color:#14251C">Découvrez Retrio en 20 secondes</strong>
+      <button type="button" class="video-close" aria-label="Fermer la démonstration" onclick="closeVideoDemo()">×</button>
+    </div>
+    <div class="video-placeholder"><div><div style="font-size:2.6rem;margin-bottom:12px">▶</div><strong style="font-size:1.25rem">La vidéo de démonstration arrive prochainement.</strong><div style="margin-top:9px;color:#C7D9CC;font-size:.92rem">Vous verrez comment retrouver un document avec quelques mots.</div></div></div>
+  </div>
+</div>
 
 <section id="fonctionnement" class="wrap" style="padding-top:72px;padding-bottom:34px">
   <div style="max-width:760px;margin-bottom:30px">
@@ -106,7 +125,7 @@
     <div aria-hidden="true" style="position:absolute;top:-46px;left:-6px;font-family:'Fraunces',serif;font-weight:700;font-size:7.5rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px #DED4BC">01</div>
     <div style="position:relative;z-index:1">
       <div style="color:#2F6B4A;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px">L'expérience</div>
-      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#14251C">Le fichier s'appelle peut-être <span style="color:#2F6B4A;font-style:italic">SCAN_2840318_001.pdf.</span></h2>
+      <h2 style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);line-height:1.15;margin:0 0 14px;color:#14251C">Le fichier s'appelle peut-être <span style="color:#2F6B4A;font-style:italic">SCAN_2840318_001.pdf ?</span></h2>
       <p style="color:#4C5A50;max-width:66ch;line-height:1.6;font-size:1.02rem;margin:0">Vous cherchez une facture, mais son nom est incompréhensible ? Écrivez « facture EDF de mars ». Retrio reconnaît les informations dans le PDF et retrouve le bon document. Regardez la démonstration ci-dessous.</p>
     </div>
   </div>
@@ -268,6 +287,9 @@
 </footer>
 
 <script>
+function openVideoDemo(){document.getElementById('video-demo').classList.add('open');document.body.style.overflow='hidden';document.querySelector('#video-demo .video-close').focus()}
+function closeVideoDemo(){document.getElementById('video-demo').classList.remove('open');document.body.style.overflow=''}
+document.addEventListener('keydown',function(event){if(event.key==='Escape')closeVideoDemo()})
 (function(){
   var heroPairs = [
     { from: 'SCAN_20240318_001.pdf', to: 'La facture du lave-linge' },
