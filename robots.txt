@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /telecharger.html
+Sitemap: https://retrio.eu/sitemap.xml

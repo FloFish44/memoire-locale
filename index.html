@@ -6,10 +6,21 @@
 <title>Retrio — Retrouvez vos fichiers</title>
  <link rel="icon" type="image/png" href="./favicon.png" />
 <meta name="description" content="Retrio retrouve vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire. Vos fichiers restent sur votre ordinateur." />
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+<meta name="theme-color" content="#1B4332" />
 <link rel="canonical" href="https://retrio.eu/" />
+<link rel="manifest" href="./site.webmanifest" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="fr_FR" />
+<meta property="og:site_name" content="Retrio" />
 <meta property="og:url" content="https://retrio.eu/" />
 <meta property="og:title" content="Retrio — Retrouvez vos fichiers" />
 <meta property="og:description" content="Retrouvez vos documents et vos photos à partir de quelques mots, même lorsque leur nom ne veut rien dire." />
+<meta property="og:image" content="https://retrio.eu/assets/demo-poster.svg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Retrio — Retrouvez vos fichiers" />
+<meta name="twitter:description" content="Retrouvez un document ou une photo avec quelques mots, même si son nom est incompréhensible." />
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Retrio","url":"https://retrio.eu/","applicationCategory":"UtilitiesApplication","operatingSystem":"Windows 10, Windows 11","description":"Logiciel de recherche locale qui retrouve des documents et des photos à partir de quelques mots, même lorsque leur nom est incompréhensible.","softwareVersion":"0.5.1 beta"},{"@type":"Organization","name":"Retrio","url":"https://retrio.eu/","email":"retrio.pro@gmail.com"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Je n'arrive pas à télécharger Retrio.","acceptedAnswer":{"@type":"Answer","text":"Vérifiez que votre antivirus ou votre navigateur n'a pas bloqué le fichier téléchargé. Si le problème persiste, contactez l'assistance Retrio."}},{"@type":"Question","name":"Retrio ne trouve pas un de mes fichiers.","acceptedAnswer":{"@type":"Answer","text":"Vérifiez que le dossier contenant ce fichier a été sélectionné, puis relancez l'analyse."}},{"@type":"Question","name":"Mes fichiers sont-ils envoyés sur Internet ?","acceptedAnswer":{"@type":"Answer","text":"Non. L'analyse, l'index et la recherche fonctionnent localement sur votre ordinateur."}}]}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
@@ -100,6 +111,19 @@
         <div id="hero-rows" style="padding:22px;display:flex;flex-direction:column;gap:10px"></div>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="wrap" aria-labelledby="guides-title" style="padding-top:34px;padding-bottom:70px">
+  <div style="color:#2F6B4A;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px">Guides pratiques</div>
+  <h2 id="guides-title" style="font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(1.9rem,3.6vw,2.7rem);margin:0 0 12px;color:#14251C">Vous avez perdu un fichier ? Commencez ici.</h2>
+  <p style="color:#4C5A50;line-height:1.65;font-size:1.02rem;max-width:70ch;margin:0 0 28px">Des méthodes simples pour retrouver un document, chercher dans plusieurs PDF ou remettre la main sur une photo mal nommée.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px">
+    <a href="./retrouver-fichier-perdu.html" style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:22px;color:#14251C"><strong>Retrouver un fichier perdu</strong><span style="display:block;color:#5B7364;margin-top:8px;font-size:.9rem;line-height:1.5">Les vérifications utiles et la recherche par contenu.</span></a>
+    <a href="./retrouver-document-sans-connaitre-nom.html" style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:22px;color:#14251C"><strong>Document au nom inconnu</strong><span style="display:block;color:#5B7364;margin-top:8px;font-size:.9rem;line-height:1.5">Chercher avec une entreprise, une date ou un montant.</span></a>
+    <a href="./rechercher-texte-dans-pdf.html" style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:22px;color:#14251C"><strong>Rechercher dans plusieurs PDF</strong><span style="display:block;color:#5B7364;margin-top:8px;font-size:.9rem;line-height:1.5">Retrouver aussi les PDF scannés grâce à l’OCR local.</span></a>
+    <a href="./retrouver-photo-ordinateur.html" style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:22px;color:#14251C"><strong>Retrouver une photo</strong><span style="display:block;color:#5B7364;margin-top:8px;font-size:.9rem;line-height:1.5">Utiliser un objet, une couleur et quelques mots simples.</span></a>
+    <a href="./logiciel-recherche-fichiers-windows.html" style="background:#FBF8F0;border:1px solid #DED4BC;border-radius:16px;padding:22px;color:#14251C"><strong>Recherche de fichiers Windows</strong><span style="display:block;color:#5B7364;margin-top:8px;font-size:.9rem;line-height:1.5">Comprendre ce que Retrio analyse et comment il recherche.</span></a>
   </div>
 </section>
 
@@ -277,6 +301,7 @@
 <footer style="border-top:1px solid #DED4BC">
   <div class="wrap" style="padding-top:28px;padding-bottom:18px;color:#5B7364;font-size:.85rem;text-align:center">
     <div class="legal-links">
+      <a href="./retrouver-fichier-perdu.html">Guides pour retrouver un fichier</a>
       <a href="./informations-legales.html#mentions">Mentions légales</a>
       <a href="./informations-legales.html#confidentialite">Politique de confidentialité</a>
       <a href="./informations-legales.html#conditions">Conditions d'utilisation</a>

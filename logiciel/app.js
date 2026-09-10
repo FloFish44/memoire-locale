@@ -29,7 +29,14 @@ async function init() {
   document.getElementById('maxBtn').onclick = () => api().toggle_maximize();
   document.getElementById('closeBtn').onclick = () => api().close_window();
   document.getElementById('folderScope').onchange = () => runSearch(document.getElementById('searchInput').value);
-  document.getElementById('yesBtn').onclick = () => document.getElementById('feedbackText').textContent = 'Parfait, vous pouvez ouvrir votre fichier.';
+  document.getElementById('yesBtn').onclick = () => {
+    const feedback=document.getElementById('feedback');
+    feedback.classList.add('confirmed');
+    document.getElementById('feedbackText').textContent='✓ Merci ! Retrio a trouvé le bon fichier.';
+    document.getElementById('yesBtn').hidden=true;
+    document.getElementById('noBtn').hidden=true;
+    document.querySelector('.result-row')?.classList.add('confirmed-match');
+  };
   document.getElementById('noBtn').onclick = () => {document.getElementById('refineHelp').hidden = false; document.getElementById('folderScope').focus();};
   document.getElementById('pickScopeBtn').onclick = async () => {
     const path = await api().pick_folder(); if (!path) return;
@@ -162,7 +169,6 @@ function bindAnalyze() {
     document.getElementById("progressTrack").hidden = false;
     setStatus("Analyse en cours (lecture du contenu des documents)…");
     document.getElementById("stopBtn").hidden = false;
-    document.getElementById("pdfReport").hidden = true;
     try {
       if (!await api().start_scan(roots)) window.onScanError("Une analyse est déjà en cours ou la sélection est invalide.");
     } catch (_) { window.onScanError("Impossible de démarrer l’analyse. Réessayez."); }
@@ -192,17 +198,6 @@ window.onScanDone = function (resultJson) {
   );
 
   document.getElementById("stopBtn").hidden = true;
-  const report = document.getElementById("pdfReport");
-  report.hidden = false;
-  report.textContent = `${result.pdf_read || 0} PDF lus, dont ${result.pdf_ocr || 0} par OCR local. ` +
-    `${result.pdf_unread || 0} PDF sans contenu lisible ; ${result.pdf_partial || 0} partiellement lus. ` +
-    `${result.errors || 0} élément(s) inaccessible(s) ou non disponible(s) localement.`;
-  for (const issue of result.pdf_issues || []) {
-    const line = document.createElement("div");
-    line.textContent = `${issue.name} : ${issue.status}`;
-    line.title = [issue.path, ...(issue.details || [])].join("\n");
-    report.appendChild(line);
-  }
   document.getElementById("statFiles").textContent = result.total_files;
   document.getElementById("statPdf").textContent = result.counts.pdf || 0;
   document.getElementById("statImages").textContent = result.counts.images || 0;
@@ -323,6 +318,9 @@ function renderResults(matches, query) {
   document.getElementById('feedback').hidden = !query;
   document.getElementById('refineHelp').hidden = !!matches.length;
   document.getElementById('feedbackText').textContent = 'Ces résultats vous conviennent-ils ?';
+  document.getElementById('feedback').classList.remove('confirmed');
+  document.getElementById('yesBtn').hidden=false;
+  document.getElementById('noBtn').hidden=false;
   matches.forEach((entry, index) => {
     const row = document.createElement("div");
     row.className = "result-row" + (index === 0 && query.trim() ? " best-match" : "");
