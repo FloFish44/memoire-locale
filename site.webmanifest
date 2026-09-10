@@ -1,0 +1,10 @@
+{
+  "name": "Retrio",
+  "short_name": "Retrio",
+  "description": "Retrouvez vos documents et vos photos avec quelques mots.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#F5F1E6",
+  "theme_color": "#1B4332",
+  "icons": [{"src":"/favicon.png","sizes":"any","type":"image/png"}]
+}
