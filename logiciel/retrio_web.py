@@ -22,6 +22,7 @@ import base64
 import csv
 import ctypes
 import difflib
+import mimetypes
 import io
 import json
 import os
@@ -29,10 +30,14 @@ import re
 import sys
 import subprocess
 import threading
+import tempfile
+import urllib.parse
+import webbrowser
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import defaultdict
 from dataclasses import dataclass, field
+from email.message import EmailMessage
 from pathlib import Path
 
 from pdf_content import PdfService, read_pdf
@@ -659,6 +664,57 @@ class Api:
         if result:
             return result[0]
         return None
+
+    def pick_bug_attachments(self):
+        import webview
+        try:
+            result = self.window.create_file_dialog(
+                webview.OPEN_DIALOG,
+                allow_multiple=True,
+                file_types=("Images (*.png;*.jpg;*.jpeg;*.webp;*.gif)", "Tous les fichiers (*.*)"),
+            )
+            return list(result or [])
+        except Exception:
+            return []
+
+    def prepare_bug_report(self, area, message, attachments=None):
+        """Create a local email draft with optional attachments; never upload data."""
+        area = str(area or "Autre problème").strip()[:120]
+        message = str(message or "").strip()[:12000]
+        if not message:
+            return {"ok": False, "error": "Décrivez le problème avant de préparer l’e-mail."}
+        mail = EmailMessage()
+        mail["To"] = "retrio.pro@gmail.com"
+        mail["Subject"] = f"[Retrio bêta] Problème — {area}"
+        mail.set_content(
+            f"Bonjour,\n\nJe rencontre un problème avec Retrio.\n\n"
+            f"Partie concernée : {area}\nVersion : {APP_VERSION}\n\n"
+            f"Description :\n{message}\n\nMerci.\n"
+        )
+        added = 0
+        for raw_path in list(attachments or [])[:5]:
+            try:
+                path = Path(str(raw_path))
+                if not path.is_file() or path.stat().st_size > 12 * 1024 * 1024:
+                    continue
+                mime, _ = mimetypes.guess_type(path.name)
+                maintype, subtype = (mime or "application/octet-stream").split("/", 1)
+                mail.add_attachment(path.read_bytes(), maintype=maintype, subtype=subtype, filename=path.name)
+                added += 1
+            except Exception:
+                continue
+        try:
+            draft_dir = Path(tempfile.gettempdir()) / "Retrio" / "assistance"
+            draft_dir.mkdir(parents=True, exist_ok=True)
+            draft = draft_dir / "signalement-retrio.eml"
+            draft.write_bytes(mail.as_bytes())
+            os.startfile(str(draft))  # type: ignore[attr-defined]
+            return {"ok": True, "attachments": added}
+        except Exception:
+            subject = urllib.parse.quote(str(mail["Subject"]))
+            body = urllib.parse.quote(mail.get_body(preferencelist=("plain",)).get_content())
+            webbrowser.open(f"mailto:retrio.pro@gmail.com?subject={subject}&body={body}")
+            return {"ok": True, "attachments": 0}
 
     # -- analyse -------------------------------------------------------------
     def start_scan(self, roots):

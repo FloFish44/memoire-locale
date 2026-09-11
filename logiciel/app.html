@@ -8,6 +8,20 @@
 <body>
 <header class="titlebar"><div class="pywebview-drag-region">R &nbsp; Retrio · Vos fichiers, en un instant</div><button id="demoBtn">Besoin d’aide ? Voir la démo</button><button id="minBtn" aria-label="Réduire">—</button><button id="maxBtn" aria-label="Agrandir">□</button><button id="closeBtn" aria-label="Fermer">×</button></header>
 <dialog id="demoDialog"><h2>Retrouvez vos fichiers en 4 étapes</h2><p>1. Choisissez vos dossiers.<br>2. Lancez l’analyse locale.<br>3. Consultez le bilan.<br>4. Décrivez ce que vous cherchez.</p><video id="demoVideo" class="demo-video" controls preload="metadata" playsinline><source src="demo-retrio.mp4" type="video/mp4">Votre ordinateur ne peut pas lire cette vidéo.</video><form method="dialog"><button class="btn btn-primary">J’ai compris</button></form></dialog>
+<dialog id="supportDialog" class="support-dialog">
+  <form id="supportForm">
+    <div class="support-head"><div><div class="support-kicker">Assistance Retrio</div><h2>Signaler un problème</h2></div><button id="supportClose" class="dialog-close" type="button" aria-label="Fermer">×</button></div>
+    <p class="support-intro">Expliquez-nous ce qui ne fonctionne pas. Un e-mail sera préparé pour <strong>retrio.pro@gmail.com</strong>.</p>
+    <label class="support-label" for="supportArea">Quelle partie pose problème ?</label>
+    <select id="supportArea" required><option value="">Choisissez une partie</option><option>Recherche</option><option>Analyse des dossiers</option><option>Résultats ou ouverture d’un fichier</option><option>Images et photos</option><option>Installation ou démarrage</option><option>Affichage de l’application</option><option>Autre problème</option></select>
+    <label class="support-label" for="supportMessage">Que s’est-il passé ?</label>
+    <textarea id="supportMessage" rows="6" required placeholder="Décrivez le problème, ce que vous avez fait et ce que vous attendiez…"></textarea>
+    <div class="support-attach-row"><button id="supportAttach" type="button" class="btn support-secondary">＋ Ajouter des captures</button><span id="supportFiles">Aucune pièce jointe</span></div>
+    <p class="support-hint">Retrio ouvrira votre logiciel de messagerie avec le texte et les pièces jointes. Vous pourrez vérifier le message avant de l’envoyer.</p>
+    <div id="supportStatus" class="support-status" role="status"></div>
+    <div class="support-actions"><button type="button" class="btn support-secondary" id="supportCancel">Annuler</button><button type="submit" class="btn btn-primary" id="supportSend">Préparer l’e-mail</button></div>
+  </form>
+</dialog>
 
 <div class="app">
 
@@ -56,6 +70,7 @@
     </nav>
 
     <div class="sidebar-bottom">
+      <button id="supportBtn" class="support-card" type="button"><span class="support-icon">?</span><span><strong>Un problème ?</strong><small>Contactez l’assistance</small></span></button>
       <div class="privacy-note">
         <span class="dot"></span>
         <div>

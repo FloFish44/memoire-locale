@@ -21,6 +21,7 @@ whenReady(init);
 
 async function init() {
   bindNav();
+  bindSupport();
   const demoDialog = document.getElementById('demoDialog');
   const demoVideo = document.getElementById('demoVideo');
   document.getElementById('demoBtn').onclick = () => { demoDialog.showModal(); demoVideo.currentTime = 0; demoVideo.play().catch(() => {}); };
@@ -52,6 +53,32 @@ async function init() {
   const folders = await api().get_known_folders();
   state.knownFolders = folders;
   renderFolderChecks();
+}
+
+function bindSupport() {
+  const dialog = document.getElementById('supportDialog');
+  const filesLabel = document.getElementById('supportFiles');
+  const status = document.getElementById('supportStatus');
+  let attachments = [];
+  document.getElementById('supportBtn').onclick = () => { status.textContent=''; dialog.showModal(); };
+  document.getElementById('supportClose').onclick = () => dialog.close();
+  document.getElementById('supportCancel').onclick = () => dialog.close();
+  document.getElementById('supportAttach').onclick = async () => {
+    attachments = await api().pick_bug_attachments() || [];
+    filesLabel.textContent = attachments.length ? `${attachments.length} pièce(s) jointe(s) : ${attachments.map(p => p.split(/[\\/]/).pop()).join(', ')}` : 'Aucune pièce jointe';
+  };
+  document.getElementById('supportForm').onsubmit = async (event) => {
+    event.preventDefault();
+    const area=document.getElementById('supportArea').value;
+    const message=document.getElementById('supportMessage').value.trim();
+    if (!area || !message) return;
+    const send=document.getElementById('supportSend'); send.disabled=true; status.textContent='Préparation de votre e-mail…';
+    try {
+      const result=await api().prepare_bug_report(area,message,attachments);
+      status.textContent=result && result.ok ? 'Votre messagerie a été ouverte. Vérifiez puis envoyez le message.' : ((result && result.error) || 'Impossible d’ouvrir votre messagerie.');
+    } catch (_) { status.textContent='Impossible d’ouvrir votre messagerie.'; }
+    finally { send.disabled=false; }
+  };
 }
 
 // -------------------- Navigation --------------------

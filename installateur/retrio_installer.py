@@ -13,7 +13,7 @@ import traceback
 APP_NAME = "Retrio"
 EXE_NAME = "RetrioWeb.exe"
 DOWNLOAD_URL = "https://github.com/FloFish44/retrio/releases/download/v0.5.0-beta/RetrioWeb.zip"
-DOWNLOAD_SHA256 = "715F0EE5B0952B46E753C9FA64F0A9EAC31C0C4828FD4141D968C81E9B9318F5"
+DOWNLOAD_SHA256 = "BBF728D91081175CF3730C5329A44B6689F3BEE0B8E376B7F212E18BAF43F78F"
 INSTALL_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Programs" / "Retrio"
 
 
@@ -190,3 +190,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
